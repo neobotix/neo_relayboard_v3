@@ -2,7 +2,7 @@ package pilot.relayboardv3;
 
 module RelayBoardV3{
 	map<vnx.TopicPtr, string> topics_board_to_ros;                   // [Pilot topic => ROS topic]
-	map<string, map<string, vnx.TopicPtr>> topics_ros_to_board;     // [ROS type => [ROS topic => Pilot Topic]]
+	map<string, map<string, vnx.TopicPtr>> topics_ros_to_board;      // [ROS type => [ROS topic => Pilot Topic]]
 	
 	int max_publish_queue_ros = 1;
 	int max_subscribe_queue_ros = 1;

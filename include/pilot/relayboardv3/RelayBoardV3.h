@@ -37,7 +37,14 @@ private:
 	ros::NodeHandle nh;
 	std::map<std::string, ros::Publisher> export_publishers;
 
-	void handle_JointTrajectory(const trajectory_msgs::JointTrajectory::ConstPtr &trajectory, vnx::TopicPtr pilot_topic);
+	template<class T>
+	void bulk_subscribe(std::function<void(const typename T::ConstPtr&, vnx::TopicPtr)> func, const std::map<std::string, vnx::TopicPtr> mapping){
+		for(const auto &entry : mapping){
+			const auto &ros_topic = entry.first;
+			const auto &pilot_topic = entry.second;
+			nh.subscribe<T>(ros_topic, max_subscribe_queue_ros, boost::bind(func, _1, pilot_topic));
+		}
+	}
 
 	template<class T>
 	void publish_to_ros(boost::shared_ptr<T> sample, vnx::TopicPtr pilot_topic){
@@ -54,6 +61,8 @@ private:
 		}
 		publisher.publish(sample);
 	}
+
+	void handle_JointTrajectory(const trajectory_msgs::JointTrajectory::ConstPtr &trajectory, vnx::TopicPtr pilot_topic);
 
 };
 

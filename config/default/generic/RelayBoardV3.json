@@ -3,5 +3,7 @@
 		"kinematics.drive_state": "/drives/joint_states"
 	},
 	"topics_ros_to_board": {
+		"/drives/joint_trajectory": "kinematics.drive_cmd"
 	}
 }
+

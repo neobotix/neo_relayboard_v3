@@ -30,15 +30,20 @@ int main(int argc, char **argv){
 	}
 	{
 		vnx::Handle<pilot::relayboardv3::RelayBoardV3> module = new pilot::relayboardv3::RelayBoardV3("RelayBoardV3");
-		module.start_detached();
 		{
 			vnx::Handle<vnx::Proxy> proxy = new vnx::Proxy("Proxy", vnx::Endpoint::from_url(board_node));
 			proxy->time_sync = true;
 			for(const auto &entry : module->topics_board_to_ros){
 				proxy->import_list.push_back(entry.first);
 			}
+			for(const auto &entry : module->topics_ros_to_board){
+				for(const auto &types : entry.second){
+					proxy->export_list.push_back(types.second);
+				}
+			}
 			proxy.start_detached();
 		}
+		module.start_detached();
 	}
 
 	ros::spin();

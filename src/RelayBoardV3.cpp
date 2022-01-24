@@ -43,11 +43,9 @@ void RelayBoardV3::main(){
 		const auto &type = entry.first;
 		if(type == "trajectory_msgs/JointTrajectory"){
 			auto func = &RelayBoardV3::handle_JointTrajectory;
-			for(const auto &topic_entry : entry.second){
-				const auto &ros_topic = topic_entry.first;
-				const auto &pilot_topic = topic_entry.second;
-				nh.subscribe<trajectory_msgs::JointTrajectory>(ros_topic, max_subscribe_queue_ros, boost::bind(func, this, _1, pilot_topic));
-			}
+			bulk_subscribe<trajectory_msgs::JointTrajectory>(std::bind(func, this, std::placeholders::_1, std::placeholders::_2), entry.second);
+		}else{
+			log(ERROR) << "Unsupported ROS type: " << type;
 		}
 	}
 
@@ -152,7 +150,8 @@ void RelayBoardV3::handle(std::shared_ptr<const pilot::kinematics::omnidrive::Dr
 
 
 void RelayBoardV3::handle_JointTrajectory(const trajectory_msgs::JointTrajectory::ConstPtr &trajectory, vnx::TopicPtr pilot_topic){
-	trajectory_msgs::JointTrajectoryPoint point = trajectory->points[0];
+	const trajectory_msgs::JointTrajectoryPoint &point = trajectory->points[0];
+
 	if(kinematic_type == kinematic_type_e::DIFFERENTIAL){
 		auto out = pilot::kinematics::differential::DriveCmd::create();
 		out->time = vnx::get_time_micros();
