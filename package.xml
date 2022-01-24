@@ -1,0 +1,20 @@
+<package>
+  <name>neo_relayboard_v3</name>
+  <version>1.0.0</version>
+  <description>ROS node for Neobotix RelayBoardV3</description>
+
+  <maintainer email="ros@neobotix.de">Neobotix</maintainer>
+  <license>BSD</license>
+  <url type="website">https://www.neobotix-roboter.de/</url>
+  <author>Jakob Wenzel</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>roscpp</build_depend>
+  <build_depend>sensor_msgs</build_depend>
+  <build_depend>trajectory_msgs</build_depend>
+
+  <run_depend>roscpp</run_depend>
+  <run_depend>sensor_msgs</run_depend>
+  <run_depend>trajectory_msgs</run_depend>
+</package>

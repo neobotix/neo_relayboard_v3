@@ -1,0 +1,7 @@
+{
+	"topics_board_to_ros": {
+		"kinematics.drive_state": "/drives/joint_states"
+	},
+	"topics_ros_to_board": {
+	}
+}

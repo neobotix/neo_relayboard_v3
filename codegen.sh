@@ -8,9 +8,11 @@ if [ -z "$VNX_INCLUDE" ]; then
 	VNX_INCLUDE=${VNX_INTERFACE_DIR}/vnx/
 fi
 
+PILOT_INCLUDE="pilot-public/interface/ pilot-public/kinematics/interface/ pilot-public/kinematics/differential/interface/ pilot-public/kinematics/mecanum/interface/ pilot-public/kinematics/omnidrive/interface/"
+
 cd $(dirname "$0")
 
 ./pilot-public/codegen.sh "$VNX_INCLUDE"
-vnxcppcodegen --cleanup generated/ pilot.relayboardv3 modules/ $VNX_INCLUDE
+vnxcppcodegen --cleanup generated/ pilot.relayboardv3 modules/ $VNX_INCLUDE $PILOT_INCLUDE
 
 

@@ -1,6 +1,15 @@
 package pilot.relayboardv3;
 
 module RelayBoardV3{
+	map<vnx.TopicPtr, string> topics_board_to_ros;                   // [Pilot topic => ROS topic]
+	map<string, map<string, vnx.TopicPtr>> topics_ros_to_board;     // [ROS type => [ROS topic => Pilot Topic]]
+	
+	int max_publish_queue_ros = 1;
+	int max_subscribe_queue_ros = 1;
+	
+	pilot.kinematic_type_e kinematic_type;
+	
+	void handle(pilot.kinematics.differential.DriveState value);
+	void handle(pilot.kinematics.mecanum.DriveState value);
+	void handle(pilot.kinematics.omnidrive.DriveState value);
 }
-
-
