@@ -52,7 +52,7 @@ void RelayBoardV3::main(){
 			auto func = &RelayBoardV3::handle_JointTrajectory;
 			bulk_subscribe<trajectory_msgs::JointTrajectory>(std::bind(func, this, std::placeholders::_1, std::placeholders::_2), entry.second);
 		}else{
-			log(ERROR) << "Unsupported ROS type: " << type;
+			ROS_ERROR_STREAM("Unsupported ROS type: " << type);
 		}
 	}
 	for(const auto &topic : topics_from_board){
@@ -356,7 +356,7 @@ bool RelayBoardV3::service_set_relay(neo_srvs::RelayBoardSetRelay::Request &req,
 		platform_interface->set_relay(req.id, req.state);
 		res.success = true;
 	}catch(const std::exception &err){
-		log(WARN) << err.what();
+		ROS_WARN_STREAM(err.what());
 		res.success = false;
 	}
 	return true;
@@ -368,7 +368,7 @@ bool RelayBoardV3::service_set_digital_output(neo_srvs::IOBoardSetDigOut::Reques
 		platform_interface->set_digital_output(req.id, req.state);
 		res.success = true;
 	}catch(const std::exception &err){
-		log(WARN) << err.what();
+		ROS_WARN_STREAM(err.what());
 		res.success = false;
 	}
 	return true;
@@ -380,7 +380,7 @@ bool RelayBoardV3::service_start_charging(std_srvs::Empty::Request &req, std_srv
 		platform_interface->start_charging();
 		return true;
 	}catch(const std::exception &err){
-		log(WARN) << err.what();
+		ROS_WARN_STREAM(err.what());
 		return false;
 	}
 }
@@ -391,7 +391,7 @@ bool RelayBoardV3::service_stop_charging(std_srvs::Empty::Request &req, std_srvs
 		platform_interface->stop_charging();
 		return true;
 	}catch(const std::exception &err){
-		log(WARN) << err.what();
+		ROS_WARN_STREAM(err.what());
 		return false;
 	}
 }
@@ -402,7 +402,7 @@ bool RelayBoardV3::service_set_LCD_message(neo_srvs::RelayBoardSetLCDMsg::Reques
 		platform_interface->set_display_text(req.message);
 		res.success = true;
 	}catch(const std::exception &err){
-		log(WARN) << err.what();
+		ROS_WARN_STREAM(err.what());
 		res.success = false;
 	}
 	return true;

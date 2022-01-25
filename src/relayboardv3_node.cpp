@@ -1,6 +1,5 @@
 #include <vnx/vnx.h>
 #include <vnx/Proxy.h>
-#include <vnx/Terminal.h>
 
 #include <neo_relayboard_v3/RelayBoardV3.h>
 
@@ -24,10 +23,6 @@ int main(int argc, char **argv){
 	nh_private.param<std::string>("pilot_config", pilot_config, "config/default/generic/");
 	vnx::read_config_tree(pilot_config);
 
-	{
-		vnx::Handle<vnx::Terminal> module = new vnx::Terminal("Terminal");
-		module.start_detached();
-	}
 	{
 		vnx::Handle<neo_relayboard_v3::RelayBoardV3> module = new neo_relayboard_v3::RelayBoardV3("RelayBoardV3");
 		{
