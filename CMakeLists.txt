@@ -17,6 +17,7 @@ find_package(catkin REQUIRED COMPONENTS
 	sensor_msgs
 	trajectory_msgs
 	neo_msgs
+	neo_srvs
 )
 
 catkin_package(
@@ -28,6 +29,7 @@ catkin_package(
 		sensor_msgs
 		trajectory_msgs
 		neo_msgs
+		neo_srvs
 	INCLUDE_DIRS
 		include
 		generated/include

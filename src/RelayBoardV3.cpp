@@ -58,6 +58,13 @@ void RelayBoardV3::main(){
 	for(const auto &topic : topics_from_board){
 		subscribe(topic, 100);
 	}
+	platform_interface = std::make_shared<PlatformInterfaceClient>(platform_interface_server);
+
+	ros_services.push_back(nh.advertiseService("set_relay", &RelayBoardV3::service_set_relay, this));
+	ros_services.push_back(nh.advertiseService("/ioboard/set_digital_output", &RelayBoardV3::service_set_digital_output, this));
+	ros_services.push_back(nh.advertiseService("start_charging", &RelayBoardV3::service_start_charging, this));
+	ros_services.push_back(nh.advertiseService("stop_charging", &RelayBoardV3::service_stop_charging, this));
+	ros_services.push_back(nh.advertiseService("set_LCD_msg", &RelayBoardV3::service_set_LCD_message, this));
 
 	Super::main();
 	ros::shutdown();
@@ -342,6 +349,65 @@ void RelayBoardV3::handle_JointTrajectory(const trajectory_msgs::JointTrajectory
 		throw std::logic_error("Unsupported kinematic type");
 	}
 }
+
+
+bool RelayBoardV3::service_set_relay(neo_srvs::RelayBoardSetRelay::Request &req, neo_srvs::RelayBoardSetRelay::Response &res){
+	try{
+		platform_interface->set_relay(req.id, req.state);
+		res.success = true;
+	}catch(const std::exception &err){
+		log(WARN) << err.what();
+		res.success = false;
+	}
+	return true;
+}
+
+
+bool RelayBoardV3::service_set_digital_output(neo_srvs::IOBoardSetDigOut::Request &req, neo_srvs::IOBoardSetDigOut::Response &res){
+	try{
+		platform_interface->set_digital_output(req.id, req.state);
+		res.success = true;
+	}catch(const std::exception &err){
+		log(WARN) << err.what();
+		res.success = false;
+	}
+	return true;
+}
+
+
+bool RelayBoardV3::service_start_charging(std_srvs::Empty::Request &req, std_srvs::Empty::Response &res){
+	try{
+		platform_interface->start_charging();
+		return true;
+	}catch(const std::exception &err){
+		log(WARN) << err.what();
+		return false;
+	}
+}
+
+
+bool RelayBoardV3::service_stop_charging(std_srvs::Empty::Request &req, std_srvs::Empty::Response &res){
+	try{
+		platform_interface->stop_charging();
+		return true;
+	}catch(const std::exception &err){
+		log(WARN) << err.what();
+		return false;
+	}
+}
+
+
+bool RelayBoardV3::service_set_LCD_message(neo_srvs::RelayBoardSetLCDMsg::Request &req, neo_srvs::RelayBoardSetLCDMsg::Response &res){
+	try{
+		platform_interface->set_display_text(req.message);
+		res.success = true;
+	}catch(const std::exception &err){
+		log(WARN) << err.what();
+		res.success = false;
+	}
+	return true;
+}
+
 
 } // relayboardv3
 } // pilot

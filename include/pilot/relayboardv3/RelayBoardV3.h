@@ -9,9 +9,14 @@
 #define INCLUDE_pilot_relayboardv3_RelayBoardV3_H
 
 #include <pilot/relayboardv3/RelayBoardV3Base.hxx>
+#include <pilot/PlatformInterfaceClient.hxx>
 
 #include <ros/ros.h>
 #include <trajectory_msgs/JointTrajectory.h>
+#include <std_srvs/Empty.h>
+#include <neo_srvs/RelayBoardSetRelay.h>
+#include <neo_srvs/IOBoardSetDigOut.h>
+#include <neo_srvs/RelayBoardSetLCDMsg.h>
 
 
 namespace pilot{
@@ -38,6 +43,9 @@ protected:
 private:
 	ros::NodeHandle nh;
 	std::map<std::string, ros::Publisher> export_publishers;
+	std::vector<ros::Subscriber> ros_subscriptions;
+	std::vector<ros::ServiceServer> ros_services;
+	std::shared_ptr<PlatformInterfaceClient> platform_interface;
 	std::shared_ptr<const pilot::PowerState> m_power_state;
 
 	template<class T>
@@ -45,7 +53,8 @@ private:
 		for(const auto &entry : mapping){
 			const auto &ros_topic = entry.first;
 			const auto &pilot_topic = entry.second;
-			nh.subscribe<T>(ros_topic, max_subscribe_queue_ros, boost::bind(func, _1, pilot_topic));
+			auto sub = nh.subscribe<T>(ros_topic, max_subscribe_queue_ros, boost::bind(func, _1, pilot_topic));
+			ros_subscriptions.push_back(sub);
 		}
 	}
 
@@ -70,6 +79,11 @@ private:
 
 	void handle_JointTrajectory(const trajectory_msgs::JointTrajectory::ConstPtr &trajectory, vnx::TopicPtr pilot_topic);
 
+	bool service_set_relay(neo_srvs::RelayBoardSetRelay::Request &req, neo_srvs::RelayBoardSetRelay::Response &res);
+	bool service_set_digital_output(neo_srvs::IOBoardSetDigOut::Request &req, neo_srvs::IOBoardSetDigOut::Response &res);
+	bool service_start_charging(std_srvs::Empty::Request &req, std_srvs::Empty::Response &res);
+	bool service_stop_charging(std_srvs::Empty::Request &req, std_srvs::Empty::Response &res);
+	bool service_set_LCD_message(neo_srvs::RelayBoardSetLCDMsg::Request &req, neo_srvs::RelayBoardSetLCDMsg::Response &res);
 };
 
 

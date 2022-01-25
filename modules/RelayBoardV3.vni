@@ -6,6 +6,8 @@ module RelayBoardV3{
 	vector<vnx.TopicPtr> topics_from_board;                          // supplementary topics
 	map<string, string> topics_to_ros;                               // [key => ROS topic]
 	
+	string platform_interface_server = "PlatformInterface";
+	
 	int max_publish_queue_ros = 1;
 	int max_subscribe_queue_ros = 1;
 	

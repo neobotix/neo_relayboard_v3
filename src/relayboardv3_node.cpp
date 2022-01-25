@@ -44,6 +44,7 @@ int main(int argc, char **argv){
 					proxy->export_list.push_back(types.second);
 				}
 			}
+			proxy->forward_list.push_back(module->platform_interface_server);
 			proxy.start_detached();
 		}
 		module.start_detached();
