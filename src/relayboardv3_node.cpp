@@ -36,6 +36,9 @@ int main(int argc, char **argv){
 			for(const auto &entry : module->topics_board_to_ros){
 				proxy->import_list.push_back(entry.first);
 			}
+			for(const auto &topic : module->topics_from_board){
+				proxy->import_list.push_back(topic);
+			}
 			for(const auto &entry : module->topics_ros_to_board){
 				for(const auto &types : entry.second){
 					proxy->export_list.push_back(types.second);

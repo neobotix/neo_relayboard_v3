@@ -12,6 +12,13 @@
 
 #include <ros/ros.h>
 #include <sensor_msgs/JointState.h>
+#include <sensor_msgs/BatteryState.h>
+#include <sensor_msgs/Range.h>
+#include <neo_msgs/EmergencyStopState.h>
+#include <neo_msgs/IOBoard.h>
+#include <neo_msgs/USBoardV2.h>
+
+#include <cmath>
 
 
 namespace pilot{
@@ -48,9 +55,76 @@ void RelayBoardV3::main(){
 			log(ERROR) << "Unsupported ROS type: " << type;
 		}
 	}
+	for(const auto &topic : topics_from_board){
+		subscribe(topic, 100);
+	}
 
 	Super::main();
 	ros::shutdown();
+}
+
+
+void RelayBoardV3::handle(std::shared_ptr<const pilot::EmergencyState> value){
+	auto out = boost::make_shared<neo_msgs::EmergencyStopState>();
+	out->header.stamp = pilot_to_ros_time(value->time);
+
+	out->emergency_button_stop = false;
+	out->scanner_stop = false;
+	if(value->code == safety_code_e::EMERGENCY_STOP){
+		out->emergency_button_stop = true;
+	}else if(value->code == safety_code_e::SCANNER_STOP){
+		out->scanner_stop = true;
+	}
+
+	if(value->state == em_stop_state_e::STOPPED){
+		out->emergency_state = neo_msgs::EmergencyStopState::EMSTOP;
+	}else if(value->state == em_stop_state_e::CONFIRMED){
+		out->emergency_state = neo_msgs::EmergencyStopState::EMCONFIRMED;
+	}else{
+		out->emergency_state = neo_msgs::EmergencyStopState::EMFREE;
+	}
+
+	publish_to_ros(out, vnx_sample->topic);
+}
+
+
+void RelayBoardV3::handle(std::shared_ptr<const pilot::BatteryState> value){
+	auto out = boost::make_shared<sensor_msgs::BatteryState>();
+	out->header.stamp = pilot_to_ros_time(value->time);
+
+	out->voltage = value->voltage;
+	out->current = value->current;
+	out->charge = NAN;
+	out->capacity = NAN;
+	out->design_capacity = NAN;
+	out->percentage = value->remaining;
+	out->power_supply_status = sensor_msgs::BatteryState::POWER_SUPPLY_STATUS_UNKNOWN;
+	if(m_power_state){
+		auto chrg = m_power_state->charging_state;
+		if(chrg == charging_state_e::IS_CHARGING){
+			out->power_supply_status = sensor_msgs::BatteryState::POWER_SUPPLY_STATUS_CHARGING;
+		}else if(chrg == charging_state_e::FINISHED){
+			out->power_supply_status = sensor_msgs::BatteryState::POWER_SUPPLY_STATUS_FULL;
+		}else{
+			out->power_supply_status = sensor_msgs::BatteryState::POWER_SUPPLY_STATUS_NOT_CHARGING;
+		}
+	}
+	out->power_supply_health = sensor_msgs::BatteryState::POWER_SUPPLY_HEALTH_UNKNOWN;
+	out->power_supply_technology = sensor_msgs::BatteryState::POWER_SUPPLY_TECHNOLOGY_UNKNOWN;
+	if(value->type == battery_type_e::AGM){
+		// lead
+	}else if(value->type == battery_type_e::LFP){
+		out->power_supply_technology = sensor_msgs::BatteryState::POWER_SUPPLY_TECHNOLOGY_LIFE;
+	}
+	out->present = true;
+
+	publish_to_ros(out, vnx_sample->topic);
+}
+
+
+void RelayBoardV3::handle(std::shared_ptr<const pilot::PowerState> value){
+	// to be merged with BatteryState
+	m_power_state = value;
 }
 
 
@@ -146,6 +220,56 @@ void RelayBoardV3::handle(std::shared_ptr<const pilot::kinematics::omnidrive::Dr
 		out->effort[7] = value->steer_torque.front_right;
 	}
 	publish_to_ros(out, vnx_sample->topic);
+}
+
+
+void RelayBoardV3::handle(std::shared_ptr<const pilot::IOBoardData> value){
+	auto out = boost::make_shared<neo_msgs::IOBoard>();
+	out->header.stamp = pilot_to_ros_time(value->time);
+
+	for(size_t i=0; i<std::min(out->digital_inputs.size(), value->digital_input.size()); i++){
+		out->digital_inputs[i] = value->digital_input[i];
+	}
+	for(size_t i=0; i<std::min(out->digital_outputs.size(), value->digital_output.size()); i++){
+		out->digital_outputs[i] = value->digital_output[i];
+	}
+	for(size_t i=0; i<std::min(out->analog_inputs.size(), value->analog_input.size()); i++){
+		out->analog_inputs[i] = value->analog_input[i];
+	}
+
+	publish_to_ros(out, vnx_sample->topic);
+}
+
+
+void RelayBoardV3::handle(std::shared_ptr<const pilot::USBoardData> value){
+	{
+		auto out = boost::make_shared<neo_msgs::USBoardV2>();
+		out->header.stamp = pilot_to_ros_time(value->time);
+
+		for(size_t i=0; i<std::min(out->sensor.size(), value->sensor.size()); i++){
+			out->sensor[i] = value->sensor[i];
+		}
+		for(size_t i=0; i<std::min(out->analog.size(), value->analog_input.size()); i++){
+			out->analog[i] = value->analog_input[i];
+		}
+		publish_to_ros(out, vnx_sample->topic);
+	}
+
+	for(size_t i=0; i<value->sensor.size(); i++){
+		const std::string key = "us_sensor_" + std::to_string(i);
+		auto find = topics_to_ros.find(key);
+		if(find != topics_to_ros.end()){
+			auto out = boost::make_shared<sensor_msgs::Range>();
+			out->header.stamp = pilot_to_ros_time(value->time);
+			out->header.frame_id = "us_" + std::to_string(i + 1) + "_link";
+			out->radiation_type = sensor_msgs::Range::ULTRASOUND;
+			out->field_of_view = 1.05;
+			out->min_range = 0.1;
+			out->max_range = 1.2;
+			out->range = value->sensor[i];
+			publish_to_ros(out, find->second);
+		}
+	}
 }
 
 
