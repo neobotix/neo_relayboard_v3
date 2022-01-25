@@ -2,7 +2,7 @@
 #include <vnx/Proxy.h>
 #include <vnx/Terminal.h>
 
-#include <pilot/relayboardv3/RelayBoardV3.h>
+#include <neo_relayboard_v3/RelayBoardV3.h>
 
 #include <ros/ros.h>
 
@@ -29,7 +29,7 @@ int main(int argc, char **argv){
 		module.start_detached();
 	}
 	{
-		vnx::Handle<pilot::relayboardv3::RelayBoardV3> module = new pilot::relayboardv3::RelayBoardV3("RelayBoardV3");
+		vnx::Handle<neo_relayboard_v3::RelayBoardV3> module = new neo_relayboard_v3::RelayBoardV3("RelayBoardV3");
 		{
 			vnx::Handle<vnx::Proxy> proxy = new vnx::Proxy("Proxy", vnx::Endpoint::from_url(board_node));
 			proxy->time_sync = true;

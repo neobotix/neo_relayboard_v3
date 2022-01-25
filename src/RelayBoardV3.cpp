@@ -5,7 +5,7 @@
  *      Author: jaw
  */
 
-#include <pilot/relayboardv3/RelayBoardV3.h>
+#include <neo_relayboard_v3/RelayBoardV3.h>
 #include <pilot/kinematics/differential/DriveCmd.hxx>
 #include <pilot/kinematics/mecanum/DriveCmd.hxx>
 #include <pilot/kinematics/omnidrive/DriveCmd.hxx>
@@ -21,9 +21,9 @@
 #include <cmath>
 
 
-namespace pilot{
-namespace relayboardv3{
+namespace neo_relayboard_v3{
 
+using namespace pilot;
 
 inline ros::Time pilot_to_ros_time(const int64_t& time_usec){
 	ros::Time time;
@@ -409,8 +409,7 @@ bool RelayBoardV3::service_set_LCD_message(neo_srvs::RelayBoardSetLCDMsg::Reques
 }
 
 
-} // relayboardv3
-} // pilot
+} // neo_relayboard_v3
 
 
 

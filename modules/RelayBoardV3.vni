@@ -1,4 +1,4 @@
-package pilot.relayboardv3;
+package neo_relayboard_v3;
 
 module RelayBoardV3{
 	map<vnx.TopicPtr, string> topics_board_to_ros;                   // [Pilot topic => ROS topic]

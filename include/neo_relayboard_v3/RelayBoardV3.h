@@ -5,10 +5,10 @@
  *      Author: jaw
  */
 
-#ifndef INCLUDE_pilot_relayboardv3_RelayBoardV3_H
-#define INCLUDE_pilot_relayboardv3_RelayBoardV3_H
+#ifndef INCLUDE_neo_relayboard_v3_RelayBoardV3_H
+#define INCLUDE_neo_relayboard_v3_RelayBoardV3_H
 
-#include <pilot/relayboardv3/RelayBoardV3Base.hxx>
+#include <neo_relayboard_v3/RelayBoardV3Base.hxx>
 #include <pilot/PlatformInterfaceClient.hxx>
 
 #include <ros/ros.h>
@@ -19,8 +19,7 @@
 #include <neo_srvs/RelayBoardSetLCDMsg.h>
 
 
-namespace pilot{
-namespace relayboardv3{
+namespace neo_relayboard_v3{
 
 
 class RelayBoardV3 : public RelayBoardV3Base{
@@ -45,7 +44,7 @@ private:
 	std::map<std::string, ros::Publisher> export_publishers;
 	std::vector<ros::Subscriber> ros_subscriptions;
 	std::vector<ros::ServiceServer> ros_services;
-	std::shared_ptr<PlatformInterfaceClient> platform_interface;
+	std::shared_ptr<pilot::PlatformInterfaceClient> platform_interface;
 	std::shared_ptr<const pilot::PowerState> m_power_state;
 
 	template<class T>
@@ -87,8 +86,7 @@ private:
 };
 
 
-} // relayboardv3
-} // pilot
+} // neo_relayboard_v3
 
 
 #endif /* INCLUDE_pilot_relayboardv3_RelayBoardV3_H */

@@ -13,6 +13,6 @@ PILOT_INCLUDE="pilot-public/interface/ pilot-public/kinematics/interface/ pilot-
 cd $(dirname "$0")
 
 ./pilot-public/codegen.sh "$VNX_INCLUDE"
-vnxcppcodegen --cleanup generated/ pilot.relayboardv3 modules/ $VNX_INCLUDE $PILOT_INCLUDE
+vnxcppcodegen --cleanup generated/ neo_relayboard_v3 modules/ $VNX_INCLUDE $PILOT_INCLUDE
 
 
