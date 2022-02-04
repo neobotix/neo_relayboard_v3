@@ -30,12 +30,14 @@ protected:
 	void init() override;
 	void main() override;
 
+	void handle(std::shared_ptr<const pilot::SystemState> value) override;
 	void handle(std::shared_ptr<const pilot::EmergencyState> value) override;
 	void handle(std::shared_ptr<const pilot::BatteryState> value) override;
 	void handle(std::shared_ptr<const pilot::PowerState> value) override;
 	void handle(std::shared_ptr<const pilot::kinematics::differential::DriveState> value) override;
 	void handle(std::shared_ptr<const pilot::kinematics::mecanum::DriveState> value) override;
 	void handle(std::shared_ptr<const pilot::kinematics::omnidrive::DriveState> value) override;
+	void handle(std::shared_ptr<const pilot::RelayBoardData> value) override;
 	void handle(std::shared_ptr<const pilot::IOBoardData> value) override;
 	void handle(std::shared_ptr<const pilot::USBoardData> value) override;
 

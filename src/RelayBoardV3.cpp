@@ -71,6 +71,11 @@ void RelayBoardV3::main(){
 }
 
 
+void RelayBoardV3::handle(std::shared_ptr<const pilot::SystemState> value){
+	// TODO
+}
+
+
 void RelayBoardV3::handle(std::shared_ptr<const pilot::EmergencyState> value){
 	auto out = boost::make_shared<neo_msgs::EmergencyStopState>();
 	out->header.stamp = pilot_to_ros_time(value->time);
@@ -227,6 +232,11 @@ void RelayBoardV3::handle(std::shared_ptr<const pilot::kinematics::omnidrive::Dr
 		out->effort[7] = value->steer_torque.front_right;
 	}
 	publish_to_ros(out, vnx_sample->topic);
+}
+
+
+void RelayBoardV3::handle(std::shared_ptr<const pilot::RelayBoardData> value){
+	// TODO
 }
 
 
