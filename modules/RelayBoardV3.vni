@@ -7,6 +7,8 @@ module RelayBoardV3{
 	map<string, string> topics_to_ros;                               // [key => ROS topic]
 	
 	string platform_interface_server = "PlatformInterface";
+	vector<string> elmo_motor_modules;
+	int motor_init_interval_ms = 1500;
 	
 	int max_publish_queue_ros = 1;
 	int max_subscribe_queue_ros = 1;

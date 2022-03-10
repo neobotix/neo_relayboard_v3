@@ -47,6 +47,7 @@ private:
 	std::vector<ros::Subscriber> ros_subscriptions;
 	std::vector<ros::ServiceServer> ros_services;
 	std::shared_ptr<pilot::PlatformInterfaceClient> platform_interface;
+	bool motors_initialized = false;
 	std::shared_ptr<const pilot::PowerState> m_power_state;
 
 	template<class T>
@@ -55,6 +56,8 @@ private:
 	void publish_to_ros(boost::shared_ptr<T> sample, const std::string &ros_topic);
 	template<class T>
 	void publish_to_ros(boost::shared_ptr<T> sample, vnx::TopicPtr pilot_topic);
+
+	void initialize_motors();
 
 	void handle_JointTrajectory(const trajectory_msgs::JointTrajectory::ConstPtr &trajectory, vnx::TopicPtr pilot_topic);
 

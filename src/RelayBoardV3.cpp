@@ -6,9 +6,12 @@
  */
 
 #include <neo_relayboard_v3/RelayBoardV3.h>
+
 #include <pilot/kinematics/differential/DriveCmd.hxx>
 #include <pilot/kinematics/mecanum/DriveCmd.hxx>
 #include <pilot/kinematics/omnidrive/DriveCmd.hxx>
+
+#include <vnx/Config.h>
 
 #include <ros/ros.h>
 #include <sensor_msgs/JointState.h>
@@ -65,6 +68,10 @@ void RelayBoardV3::main(){
 	ros_services.push_back(nh.advertiseService("start_charging", &RelayBoardV3::service_start_charging, this));
 	ros_services.push_back(nh.advertiseService("stop_charging", &RelayBoardV3::service_stop_charging, this));
 	ros_services.push_back(nh.advertiseService("set_LCD_msg", &RelayBoardV3::service_set_LCD_message, this));
+
+	if(motor_init_interval_ms > 0){
+		set_timer_millis(motor_init_interval_ms, std::bind(&RelayBoardV3::initialize_motors, this));
+	}
 
 	Super::main();
 	ros::shutdown();
@@ -319,6 +326,19 @@ void RelayBoardV3::publish_to_ros(boost::shared_ptr<T> sample, vnx::TopicPtr pil
 		throw std::logic_error("No export set for topic " + vnx::to_string(pilot_topic));
 	}
 	publish_to_ros(sample, find->second);
+}
+
+
+void RelayBoardV3::initialize_motors(){
+	if(motors_initialized){
+		return;
+	}
+
+	for(const auto &name : elmo_motor_modules){
+		vnx::Object config = vnx::get_config_object(name);
+		platform_interface->initialize_motors(name, config);
+	}
+	motors_initialized = true;
 }
 
 

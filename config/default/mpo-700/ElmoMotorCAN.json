@@ -1,0 +1,95 @@
+{
+	"motor_map": {
+		"FRONT_LEFT": {
+			"DRIVE": {
+				"can_id": 2,
+				"rot_sign": -1,
+				"enc_ticks_per_rev": 10000,
+				"gear_ratio": 30,
+				"torque_constant": 0.116,
+				"mode": "VELOCITY_CONTROL"
+			},
+			"STEER": {
+				"can_id": 1,
+				"rot_sign": 1,
+				"enc_ticks_per_rev": 10000,
+				"gear_ratio": 19,
+				"torque_constant": 0.116,
+				"home_dig_in": 9,
+				"home_angle": 180,
+				"enc_home_offset": 4663,
+				"do_home": true,
+				"mode": "POSITION_CONTROL"
+			}
+		},
+		"FRONT_RIGHT": {
+			"DRIVE": {
+				"can_id": 8,
+				"rot_sign": 1,
+				"enc_ticks_per_rev": 10000,
+				"gear_ratio": 30,
+				"torque_constant": 0.116,
+				"mode": "VELOCITY_CONTROL"
+			},
+			"STEER": {
+				"can_id": 7,
+				"rot_sign": -1,
+				"enc_ticks_per_rev": 10000,
+				"gear_ratio": 19,
+				"torque_constant": 0.116,
+				"home_dig_in": 9,
+				"home_angle": 0,
+				"enc_home_offset": -5363,
+				"do_home": true,
+				"mode": "POSITION_CONTROL"
+			}
+		},
+		"BACK_LEFT": {
+			"DRIVE": {
+				"can_id": 4,
+				"rot_sign": 1,
+				"enc_ticks_per_rev": 10000,
+				"gear_ratio": 30,
+				"torque_constant": 0.116,
+				"mode": "VELOCITY_CONTROL"
+			},
+			"STEER": {
+				"can_id": 3,
+				"rot_sign": -1,
+				"enc_ticks_per_rev": 10000,
+				"gear_ratio": 19,
+				"torque_constant": 0.116,
+				"home_dig_in": 9,
+				"home_angle": 180,
+				"enc_home_offset": -5429,
+				"do_home": true,
+				"mode": "POSITION_CONTROL"
+			}
+		},
+		"BACK_RIGHT": {
+			"DRIVE": {
+				"can_id": 6,
+				"rot_sign": -1,
+				"enc_ticks_per_rev": 10000,
+				"gear_ratio": 30,
+				"torque_constant": 0.116,
+				"mode": "VELOCITY_CONTROL"
+			},
+			"STEER": {
+				"can_id": 5,
+				"rot_sign": 1,
+				"enc_ticks_per_rev": 10000,
+				"gear_ratio": 19,
+				"torque_constant": 0.116,
+				"home_dig_in": 9,
+				"home_angle": 0,
+				"enc_home_offset": 4845,
+				"do_home": true,
+				"mode": "POSITION_CONTROL"
+			}
+		}
+	},
+	"can_proxy_server": "CAN_Proxy_Motors",
+	"kinematic_type": "OMNIDRIVE",
+	"require_homing" : true
+}
