@@ -8,7 +8,7 @@ if [ -z "$VNX_INCLUDE" ]; then
 	VNX_INCLUDE=${VNX_INTERFACE_DIR}/vnx/
 fi
 
-PILOT_INCLUDE="pilot-public/interface/ pilot-public/kinematics/interface/ pilot-public/kinematics/differential/interface/ pilot-public/kinematics/mecanum/interface/ pilot-public/kinematics/omnidrive/interface/"
+PILOT_INCLUDE="pilot-public/interface/ pilot-public/kinematics/interface/ pilot-public/kinematics/bicycle/interface/ pilot-public/kinematics/differential/interface/ pilot-public/kinematics/mecanum/interface/ pilot-public/kinematics/omnidrive/interface/"
 
 cd $(dirname "$0")
 

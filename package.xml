@@ -1,24 +1,26 @@
-<package>
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
   <name>neo_relayboard_v3</name>
   <version>1.0.0</version>
-  <description>ROS node for Neobotix RelayBoardV3</description>
+  <description>ROS2 node for Neobotix RelayBoardV3</description>
 
   <maintainer email="ros@neobotix.de">Neobotix</maintainer>
   <license>BSD</license>
   <url type="website">https://www.neobotix-roboter.de/</url>
   <author>Jakob Wenzel</author>
 
-  <buildtool_depend>catkin</buildtool_depend>
+  <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <build_depend>roscpp</build_depend>
-  <build_depend>sensor_msgs</build_depend>
-  <build_depend>trajectory_msgs</build_depend>
-  <build_depend>neo_msgs</build_depend>
-  <build_depend>neo_srvs</build_depend>
+  <exec_depend>rclcpp</exec_depend>
+  <exec_depend>std_srvs</exec_depend>
+  <exec_depend>trajectory_msgs</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+  <exec_depend>neo_msgs2</exec_depend>
+  <exec_depend>neo_srvs2</exec_depend>
 
-  <run_depend>roscpp</run_depend>
-  <run_depend>sensor_msgs</run_depend>
-  <run_depend>trajectory_msgs</run_depend>
-  <run_depend>neo_msgs</run_depend>
-  <run_depend>neo_srvs</run_depend>
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
 </package>
+

@@ -12,6 +12,7 @@
 		}
 	},
 	"topics_from_board": [
+		"platform.safety_state",
 		"platform.power_state"
 	],
 	"topics_to_ros": {
@@ -31,9 +32,6 @@
 		"us_sensor_13": "/usboard/sensor14",
 		"us_sensor_14": "/usboard/sensor15",
 		"us_sensor_15": "/usboard/sensor16"
-	},
-	"elmo_motor_modules": [
-		"ElmoMotorCAN"
-	]
+	}
 }
 

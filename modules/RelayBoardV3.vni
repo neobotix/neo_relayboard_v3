@@ -7,8 +7,10 @@ module RelayBoardV3{
 	map<string, string> topics_to_ros;                               // [key => ROS topic]
 	
 	string platform_interface_server = "PlatformInterface";
-	vector<string> elmo_motor_modules;
-	int motor_init_interval_ms = 1500;
+	string safety_server = "SafetyInterface";
+	string launcher_server = "RelayBoardV3Launcher";
+	int board_init_interval_ms = 1500;
+	vnx.Object remote_config;
 	
 	int max_publish_queue_ros = 1;
 	int max_subscribe_queue_ros = 1;
@@ -16,13 +18,15 @@ module RelayBoardV3{
 	pilot.kinematic_type_e kinematic_type;
 	
 	void handle(pilot.SystemState value);
+	void handle(pilot.SafetyState value);
 	void handle(pilot.EmergencyState value);
 	void handle(pilot.BatteryState value);
 	void handle(pilot.PowerState value);
+	void handle(pilot.kinematics.bicycle.DriveState value);
 	void handle(pilot.kinematics.differential.DriveState value);
 	void handle(pilot.kinematics.mecanum.DriveState value);
 	void handle(pilot.kinematics.omnidrive.DriveState value);
-	void handle(pilot.RelayBoardData value);
+	void handle(pilot.RelayBoardV3Data value);
 	void handle(pilot.IOBoardData value);
 	void handle(pilot.USBoardData value);
 }

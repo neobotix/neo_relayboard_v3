@@ -10,13 +10,15 @@
 
 #include <neo_relayboard_v3/RelayBoardV3Base.hxx>
 #include <pilot/PlatformInterfaceClient.hxx>
+#include <pilot/SafetyInterfaceClient.hxx>
+#include <pilot/ModuleLauncherClient.hxx>
 
-#include <ros/ros.h>
-#include <trajectory_msgs/JointTrajectory.h>
-#include <std_srvs/Empty.h>
-#include <neo_srvs/RelayBoardSetRelay.h>
-#include <neo_srvs/IOBoardSetDigOut.h>
-#include <neo_srvs/RelayBoardSetLCDMsg.h>
+#include <rclcpp/rclcpp.hpp>
+#include <trajectory_msgs/msg/joint_trajectory.hpp>
+#include <std_srvs/srv/empty.hpp>
+#include <neo_srvs2/srv/relay_board_set_relay.hpp>
+#include <neo_srvs2/srv/io_board_set_dig_out.hpp>
+#include <neo_srvs2/srv/relay_board_set_lcd_msg.hpp>
 
 
 namespace neo_relayboard_v3{
@@ -24,48 +26,57 @@ namespace neo_relayboard_v3{
 
 class RelayBoardV3 : public RelayBoardV3Base{
 public:
-	RelayBoardV3(const std::string &_vnx_name);
+	RelayBoardV3(const std::string &_vnx_name, std::shared_ptr<rclcpp::Node> node_handle);
 
 protected:
-	void init() override;
 	void main() override;
 
 	void handle(std::shared_ptr<const pilot::SystemState> value) override;
+	void handle(std::shared_ptr<const pilot::SafetyState> value) override;
 	void handle(std::shared_ptr<const pilot::EmergencyState> value) override;
 	void handle(std::shared_ptr<const pilot::BatteryState> value) override;
 	void handle(std::shared_ptr<const pilot::PowerState> value) override;
+	void handle(std::shared_ptr<const pilot::kinematics::bicycle::DriveState> value) override;
 	void handle(std::shared_ptr<const pilot::kinematics::differential::DriveState> value) override;
 	void handle(std::shared_ptr<const pilot::kinematics::mecanum::DriveState> value) override;
 	void handle(std::shared_ptr<const pilot::kinematics::omnidrive::DriveState> value) override;
-	void handle(std::shared_ptr<const pilot::RelayBoardData> value) override;
+	void handle(std::shared_ptr<const pilot::RelayBoardV3Data> value) override;
 	void handle(std::shared_ptr<const pilot::IOBoardData> value) override;
 	void handle(std::shared_ptr<const pilot::USBoardData> value) override;
 
+	void handle_JointTrajectory(std::shared_ptr<const trajectory_msgs::msg::JointTrajectory> trajectory, vnx::TopicPtr pilot_topic);
+
 private:
-	ros::NodeHandle nh;
-	std::map<std::string, ros::Publisher> export_publishers;
-	std::vector<ros::Subscriber> ros_subscriptions;
-	std::vector<ros::ServiceServer> ros_services;
+	std::shared_ptr<rclcpp::Node> nh;
+	std::map<std::string, std::shared_ptr<rclcpp::SubscriptionBase>> import_subscribers;
+	std::map<std::string, std::shared_ptr<rclcpp::PublisherBase>> export_publishers;
+
 	std::shared_ptr<pilot::PlatformInterfaceClient> platform_interface;
-	bool motors_initialized = false;
+	std::shared_ptr<pilot::SafetyInterfaceClient> safety_interface;
+	std::shared_ptr<pilot::ModuleLauncherClient> module_launcher;
+
+	bool board_initialized = false;
 	std::shared_ptr<const pilot::PowerState> m_power_state;
 
 	template<class T>
-	void bulk_subscribe(std::function<void(const typename T::ConstPtr&, vnx::TopicPtr)> func, const std::map<std::string, vnx::TopicPtr> mapping);
+	void bulk_subscribe(std::function<void(std::shared_ptr<const T>, vnx::TopicPtr)> func, const std::map<std::string, vnx::TopicPtr> &mapping, const rclcpp::QoS &qos);
 	template<class T>
-	void publish_to_ros(boost::shared_ptr<T> sample, const std::string &ros_topic);
+	void publish_to_ros(std::shared_ptr<T> sample, const std::string &ros_topic, const rclcpp::QoS &qos);
 	template<class T>
-	void publish_to_ros(boost::shared_ptr<T> sample, vnx::TopicPtr pilot_topic);
+	void publish_to_ros(std::shared_ptr<T> sample, vnx::TopicPtr pilot_topic, const rclcpp::QoS &qos);
 
-	void initialize_motors();
+	void init_board();
 
-	void handle_JointTrajectory(const trajectory_msgs::JointTrajectory::ConstPtr &trajectory, vnx::TopicPtr pilot_topic);
-
-	bool service_set_relay(neo_srvs::RelayBoardSetRelay::Request &req, neo_srvs::RelayBoardSetRelay::Response &res);
-	bool service_set_digital_output(neo_srvs::IOBoardSetDigOut::Request &req, neo_srvs::IOBoardSetDigOut::Response &res);
-	bool service_start_charging(std_srvs::Empty::Request &req, std_srvs::Empty::Response &res);
-	bool service_stop_charging(std_srvs::Empty::Request &req, std_srvs::Empty::Response &res);
-	bool service_set_LCD_message(neo_srvs::RelayBoardSetLCDMsg::Request &req, neo_srvs::RelayBoardSetLCDMsg::Response &res);
+	rclcpp::Service<neo_srvs2::srv::RelayBoardSetRelay>::SharedPtr srv_set_relay;
+	rclcpp::Service<neo_srvs2::srv::IOBoardSetDigOut>::SharedPtr srv_io_board_set_dig_out;
+	rclcpp::Service<std_srvs::srv::Empty>::SharedPtr srv_start_charging;
+	rclcpp::Service<std_srvs::srv::Empty>::SharedPtr srv_stop_charging;
+	rclcpp::Service<neo_srvs2::srv::RelayBoardSetLCDMsg>::SharedPtr srv_set_LCD_message;
+	bool service_set_relay(std::shared_ptr<neo_srvs2::srv::RelayBoardSetRelay::Request> req, std::shared_ptr<neo_srvs2::srv::RelayBoardSetRelay::Response> res);
+	bool service_set_digital_output(std::shared_ptr<neo_srvs2::srv::IOBoardSetDigOut::Request> req, std::shared_ptr<neo_srvs2::srv::IOBoardSetDigOut::Response> res);
+	bool service_start_charging(std::shared_ptr<std_srvs::srv::Empty::Request> req, std::shared_ptr<std_srvs::srv::Empty::Response> res);
+	bool service_stop_charging(std::shared_ptr<std_srvs::srv::Empty::Request> req, std::shared_ptr<std_srvs::srv::Empty::Response> res);
+	bool service_set_LCD_message(std::shared_ptr<neo_srvs2::srv::RelayBoardSetLCDMsg::Request> req, std::shared_ptr<neo_srvs2::srv::RelayBoardSetLCDMsg::Response> res);
 };
 
 
