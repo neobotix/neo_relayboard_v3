@@ -1,0 +1,3 @@
+[submodule "pilot-public"]
+	path = pilot-public
+	url = https://github.com/neobotix/pilot-public
