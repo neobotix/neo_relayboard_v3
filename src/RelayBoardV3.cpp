@@ -17,6 +17,8 @@
 #include <neo_msgs2/msg/emergency_stop_state.hpp>
 #include <neo_msgs2/msg/io_board.hpp>
 #include <neo_msgs2/msg/us_board_v2.hpp>
+#include <neo_msgs2/msg/relay_board_v3.hpp>
+#include <neo_msgs2/msg/safety_state.hpp>
 
 #include <cmath>
 
@@ -32,13 +34,11 @@ rclcpp::Time pilot_to_ros_time(const int64_t& time_usec)
 	return time;
 }
 
-
 RelayBoardV3::RelayBoardV3(const std::string &_vnx_name, std::shared_ptr<rclcpp::Node> node_handle):
 	RelayBoardV3Base(_vnx_name)
 {
 	nh = node_handle;
 }
-
 
 void RelayBoardV3::main(){
 	for(const auto &entry : topics_board_to_ros){
@@ -60,10 +60,10 @@ void RelayBoardV3::main(){
 	module_launcher = std::make_shared<ModuleLauncherClient>(launcher_server);
 
 	srv_set_relay = nh->create_service<neo_srvs2::srv::RelayBoardSetRelay>("set_relay", std::bind(&RelayBoardV3::service_set_relay, this, std::placeholders::_1, std::placeholders::_2));
-	srv_io_board_set_dig_out = nh->create_service<neo_srvs2::srv::IOBoardSetDigOut>("/ioboard/set_digital_output", std::bind(&RelayBoardV3::service_set_digital_output, this, std::placeholders::_1, std::placeholders::_2));
+	srv_io_board_set_dig_out = nh->create_service<neo_srvs2::srv::IOBoardSetDigOut>("ioboard/set_digital_output", std::bind(&RelayBoardV3::service_set_digital_output, this, std::placeholders::_1, std::placeholders::_2));
 	srv_start_charging = nh->create_service<std_srvs::srv::Empty>("start_charging", std::bind(&RelayBoardV3::service_start_charging, this, std::placeholders::_1, std::placeholders::_2));
 	srv_stop_charging = nh->create_service<std_srvs::srv::Empty>("stop_charging", std::bind(&RelayBoardV3::service_stop_charging, this, std::placeholders::_1, std::placeholders::_2));
-	srv_set_LCD_message = nh->create_service<neo_srvs2::srv::RelayBoardSetLCDMsg>("set_LCD_msg", std::bind(&RelayBoardV3::service_set_LCD_message, this, std::placeholders::_1, std::placeholders::_2));
+	srv_set_safety_field = nh->create_service<neo_srvs2::srv::SetSafetyField>("set_safety_field", std::bind(&RelayBoardV3::service_set_safety_field, this, std::placeholders::_1, std::placeholders::_2));
 
 	if(board_init_interval_ms > 0){
 		set_timer_millis(board_init_interval_ms, std::bind(&RelayBoardV3::init_board, this));
@@ -80,9 +80,19 @@ void RelayBoardV3::handle(std::shared_ptr<const pilot::SystemState> value){
 
 
 void RelayBoardV3::handle(std::shared_ptr<const pilot::SafetyState> value){
-	// TODO
-}
+	auto out = std::make_shared<neo_msgs2::msg::SafetyState>();
+	out->time = value->time;
 
+	out->current_safety_field = value->current_safety_field;
+
+	int i = 0;
+    for (char path : value->triggered_cutoff_paths) {
+        out->triggered_cutoff_paths[i] = path;
+        i++;
+    }
+
+	publish_to_ros(out, vnx_sample->topic, rclcpp::QoS(rclcpp::KeepLast(max_publish_queue_ros)));
+}
 
 void RelayBoardV3::handle(std::shared_ptr<const pilot::EmergencyState> value){
 	auto out = std::make_shared<neo_msgs2::msg::EmergencyStopState>();
@@ -106,7 +116,6 @@ void RelayBoardV3::handle(std::shared_ptr<const pilot::EmergencyState> value){
 
 	publish_to_ros(out, vnx_sample->topic, rclcpp::QoS(rclcpp::KeepLast(max_publish_queue_ros)));
 }
-
 
 void RelayBoardV3::handle(std::shared_ptr<const pilot::BatteryState> value){
 	auto out = std::make_shared<sensor_msgs::msg::BatteryState>();
@@ -141,18 +150,15 @@ void RelayBoardV3::handle(std::shared_ptr<const pilot::BatteryState> value){
 	publish_to_ros(out, vnx_sample->topic, rclcpp::QoS(rclcpp::KeepLast(max_publish_queue_ros)));
 }
 
-
 void RelayBoardV3::handle(std::shared_ptr<const pilot::PowerState> value){
 	// to be merged with BatteryState
 	m_power_state = value;
 }
 
-
 void RelayBoardV3::handle(std::shared_ptr<const pilot::kinematics::bicycle::DriveState> value){
 	const std::string dont_optimize_away_the_library = vnx::to_string(*value);
 	// TODO
 }
-
 
 void RelayBoardV3::handle(std::shared_ptr<const pilot::kinematics::differential::DriveState> value){
 	const std::string dont_optimize_away_the_library = vnx::to_string(*value);
@@ -253,7 +259,32 @@ void RelayBoardV3::handle(std::shared_ptr<const pilot::kinematics::omnidrive::Dr
 
 
 void RelayBoardV3::handle(std::shared_ptr<const pilot::RelayBoardV3Data> value){
-	// TODO
+	auto out = std::make_shared<neo_msgs2::msg::RelayBoardV3>();
+
+	out->time = value->time;
+	out->firmware_version = value->firmware_version;
+	out->uptime = value->uptime;
+	out->ambient_temperature = value->ambient_temperature;
+
+	for(int i = 0; i < value->relay_states.size(); ++i) {
+		out->relay_states[i] = value->relay_states[i];
+	}
+
+	for(int i = 0; i < value->relay_states.size(); ++i) {
+		out->digital_input_states[i] = value->digital_input_states[i];
+	}
+
+	for(int i = 0; i < value->relay_states.size(); ++i) {
+		out->keypad_button_states[i] = value->keypad_button_states[i];
+	}
+
+	out->key_switch_off_state = value->key_switch_off_state;
+
+	out->release_structure_state = value->release_structure_state;
+
+	// ToDo add LED states
+
+	publish_to_ros(out, vnx_sample->topic, rclcpp::QoS(rclcpp::KeepLast(max_publish_queue_ros)));
 }
 
 
@@ -480,6 +511,19 @@ bool RelayBoardV3::service_stop_charging(std::shared_ptr<std_srvs::srv::Empty::R
 bool RelayBoardV3::service_set_LCD_message(std::shared_ptr<neo_srvs2::srv::RelayBoardSetLCDMsg::Request> req, std::shared_ptr<neo_srvs2::srv::RelayBoardSetLCDMsg::Response> res){
 	try{
 		platform_interface->set_display_text(req->message);
+		res->success = true;
+		return true;
+	}catch(const std::exception &err){
+		const std::string error = "Service call failed with: " + std::string(err.what());
+		RCLCPP_ERROR_STREAM(nh->get_logger(), error);
+		res->success = false;
+		return false;
+	}
+}
+
+bool RelayBoardV3::service_set_safety_field(std::shared_ptr<neo_srvs2::srv::SetSafetyField::Request> req, std::shared_ptr<neo_srvs2::srv::SetSafetyField::Response> res){
+	try{
+		safety_interface->select_safety_field(req->field_id);
 		res->success = true;
 		return true;
 	}catch(const std::exception &err){
