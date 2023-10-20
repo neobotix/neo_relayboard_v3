@@ -73,6 +73,6 @@ add_subdirectory(pilot-public)
 
 install(TARGETS relayboardv3 DESTINATION lib/${PROJECT_NAME})
 install(TARGETS relayboardv3_node DESTINATION lib/${PROJECT_NAME})
-install(DIRECTORY config DESTINATION share/${PROJECT_NAME})
+install(DIRECTORY launch config DESTINATION share/${PROJECT_NAME})
 
-
+ament_package()
