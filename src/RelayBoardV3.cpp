@@ -227,22 +227,14 @@ void RelayBoardV3::handle(std::shared_ptr<const pilot::kinematics::omnidrive::Dr
 	out->name[5] = "mpo_700_caster_back_right_joint";
 	out->name[6] = "mpo_700_wheel_front_right_joint";
 	out->name[7] = "mpo_700_caster_front_right_joint";
-	out->position[0] = value->drive_pos.get(pilot::kinematics::position_code_e::FRONT_LEFT);
 	out->position[1] = value->steer_pos.get(pilot::kinematics::position_code_e::FRONT_LEFT);
-	out->position[2] = value->drive_pos.get(pilot::kinematics::position_code_e::BACK_LEFT);
 	out->position[3] = value->steer_pos.get(pilot::kinematics::position_code_e::BACK_LEFT);
-	out->position[4] = value->drive_pos.get(pilot::kinematics::position_code_e::BACK_RIGHT);
 	out->position[5] = value->steer_pos.get(pilot::kinematics::position_code_e::BACK_RIGHT);
-	out->position[6] = value->drive_pos.get(pilot::kinematics::position_code_e::FRONT_RIGHT);
 	out->position[7] = value->steer_pos.get(pilot::kinematics::position_code_e::FRONT_RIGHT);
 	out->velocity[0] = value->drive_vel.get(pilot::kinematics::position_code_e::FRONT_LEFT);
-	out->velocity[1] = value->steer_vel.get(pilot::kinematics::position_code_e::FRONT_LEFT);
 	out->velocity[2] = value->drive_vel.get(pilot::kinematics::position_code_e::BACK_LEFT);
-	out->velocity[3] = value->steer_vel.get(pilot::kinematics::position_code_e::BACK_LEFT);
 	out->velocity[4] = value->drive_vel.get(pilot::kinematics::position_code_e::BACK_RIGHT);
-	out->velocity[5] = value->steer_vel.get(pilot::kinematics::position_code_e::BACK_RIGHT);
 	out->velocity[6] = value->drive_vel.get(pilot::kinematics::position_code_e::FRONT_RIGHT);
-	out->velocity[7] = value->steer_vel.get(pilot::kinematics::position_code_e::FRONT_RIGHT);
 	if(value->has_torque) {
 		out->effort.resize(8);
 		out->effort[0] = value->drive_torque.get(pilot::kinematics::position_code_e::FRONT_LEFT);
