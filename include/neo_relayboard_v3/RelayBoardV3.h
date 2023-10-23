@@ -77,6 +77,8 @@ private:
 	rclcpp::Service<neo_srvs2::srv::RelayBoardSetLCDMsg>::SharedPtr srv_set_LCD_message;
 	rclcpp::Service<neo_srvs2::srv::SetSafetyField>::SharedPtr srv_set_safety_field;
 
+	bool is_shutdown = false;
+
 	bool service_set_relay(std::shared_ptr<neo_srvs2::srv::RelayBoardSetRelay::Request> req, std::shared_ptr<neo_srvs2::srv::RelayBoardSetRelay::Response> res);
 	bool service_set_digital_output(std::shared_ptr<neo_srvs2::srv::IOBoardSetDigOut::Request> req, std::shared_ptr<neo_srvs2::srv::IOBoardSetDigOut::Response> res);
 	bool service_start_charging(std::shared_ptr<std_srvs::srv::Empty::Request> req, std::shared_ptr<std_srvs::srv::Empty::Response> res);

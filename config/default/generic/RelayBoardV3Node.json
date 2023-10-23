@@ -15,7 +15,7 @@
 		}
 	},
 	"topics_from_board": [
-		"platform.safety_state",
+		"platform.system_state",
 		"platform.power_state"
 	],
 	"topics_to_ros": {
