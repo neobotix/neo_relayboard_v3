@@ -97,10 +97,10 @@ void RelayBoardV3::handle(std::shared_ptr<const pilot::SafetyState> value){
 	out->current_safety_field = value->current_safety_field;
 
 	int i = 0;
-    for (char path : value->triggered_cutoff_paths) {
-        out->triggered_cutoff_paths[i] = path;
-        i++;
-    }
+	for (char path : value->triggered_cutoff_paths) {
+		out->triggered_cutoff_paths[i] = path;
+		i++;
+	}
 
 	publish_to_ros(out, vnx_sample->topic, rclcpp::QoS(rclcpp::KeepLast(max_publish_queue_ros)));
 }
@@ -388,11 +388,10 @@ void RelayBoardV3::init_board(){
 }
 
 void RelayBoardV3::handle_KinState(std::shared_ptr<const neo_msgs2::msg::KinematicsState> state, vnx::TopicPtr pilot_topic){
-	auto kin_state = state;
 	auto out = pilot::kinematics::KinematicsState::create();
 	out->time = vnx::get_time_micros();
-	out->is_vel_cmd = kin_state->is_vel_cmd;
-	out->is_moving = kin_state->is_moving;
+	out->is_vel_cmd = state->is_vel_cmd;
+	out->is_moving = state->is_moving;
 
 	publish(out, pilot_topic);
 }
@@ -450,13 +449,13 @@ void RelayBoardV3::handle_JointTrajectory(std::shared_ptr<const trajectory_msgs:
 			}else if(name == "mpo_700_wheel_back_right_joint"){
 				out->drive_vel.set(pilot::kinematics::position_code_e::BACK_RIGHT, v);
 			}else if(name == "mpo_700_caster_front_left_joint"){
-				out->drive_vel.set(pilot::kinematics::position_code_e::FRONT_LEFT, v);
+				out->steer_pos.set(pilot::kinematics::position_code_e::FRONT_LEFT, p);
 			}else if(name == "mpo_700_caster_front_right_joint"){
-				out->drive_vel.set(pilot::kinematics::position_code_e::FRONT_RIGHT, v);
+				out->steer_pos.set(pilot::kinematics::position_code_e::FRONT_RIGHT, p);
 			}else if(name == "mpo_700_caster_back_left_joint"){
-				out->drive_vel.set(pilot::kinematics::position_code_e::BACK_LEFT, v);
+				out->steer_pos.set(pilot::kinematics::position_code_e::BACK_LEFT, p);
 			}else if(name == "mpo_700_caster_back_right_joint"){
-				out->drive_vel.set(pilot::kinematics::position_code_e::BACK_RIGHT, v);
+				out->steer_pos.set(pilot::kinematics::position_code_e::BACK_RIGHT, p);
 			}else{
 				throw std::logic_error("Unknown joint name: " + name);
 			}

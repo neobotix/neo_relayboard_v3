@@ -5,13 +5,16 @@
 		["kinematics.drive_state", "drives/joint_states"],
 		["platform.io_board_data", "ioboard/data"],
 		["platform.us_board_data", "usboard/measurements"],
-		["platform.relay_board_data" "relayboard_v3/state"]
-		["platform.safety_state" "safety_state"]
+		["platform.relay_board_data", "relayboard_v3/state"],
+		["platform.safety_state", "safety_state"]
 	],
 
 	"topics_ros_to_board": {
 		"trajectory_msgs/JointTrajectory": {
 			"/drives/joint_trajectory": "kinematics.drive_cmd"
+		},
+		"neo_msgs2/KinematicsState":{
+			"/kinematics_state": "kinematics.state"
 		}
 	},
 	"topics_from_board": [
