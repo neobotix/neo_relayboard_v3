@@ -10,6 +10,7 @@
 #include <pilot/kinematics/differential/DriveCmd.hxx>
 #include <pilot/kinematics/mecanum/DriveCmd.hxx>
 #include <pilot/kinematics/omnidrive/DriveCmd.hxx>
+#include <pilot/kinematics/KinematicsState.hxx>
 
 #include <sensor_msgs/msg/joint_state.hpp>
 #include <sensor_msgs/msg/battery_state.hpp>
@@ -19,6 +20,7 @@
 #include <neo_msgs2/msg/us_board_v2.hpp>
 #include <neo_msgs2/msg/relay_board_v3.hpp>
 #include <neo_msgs2/msg/safety_state.hpp>
+#include <neo_msgs2/msg/kinematics_state.hpp>
 
 #include <cmath>
 #include <vnx/vnx.h>
@@ -48,7 +50,9 @@ void RelayBoardV3::main(){
 		const auto &ros_type = entry.first;
 		if(ros_type == "trajectory_msgs/JointTrajectory"){
 			bulk_subscribe<trajectory_msgs::msg::JointTrajectory>(std::bind(&RelayBoardV3::handle_JointTrajectory, this, std::placeholders::_1, std::placeholders::_2), entry.second, rclcpp::QoS(rclcpp::KeepLast(max_subscribe_queue_ros)));
-		}else{
+		} else if(ros_type == "neo_msgs2/KinematicsState") {
+			bulk_subscribe<neo_msgs2::msg::KinematicsState>(std::bind(&RelayBoardV3::handle_KinState, this, std::placeholders::_1, std::placeholders::_2), entry.second, rclcpp::QoS(rclcpp::KeepLast(max_subscribe_queue_ros)));
+		} else{
 			log(WARN) << "Unsupported ROS type: " << ros_type;
 		}
 	}
@@ -93,10 +97,10 @@ void RelayBoardV3::handle(std::shared_ptr<const pilot::SafetyState> value){
 	out->current_safety_field = value->current_safety_field;
 
 	int i = 0;
-    for (char path : value->triggered_cutoff_paths) {
-        out->triggered_cutoff_paths[i] = path;
-        i++;
-    }
+	for (char path : value->triggered_cutoff_paths) {
+		out->triggered_cutoff_paths[i] = path;
+		i++;
+	}
 
 	publish_to_ros(out, vnx_sample->topic, rclcpp::QoS(rclcpp::KeepLast(max_publish_queue_ros)));
 }
@@ -383,6 +387,14 @@ void RelayBoardV3::init_board(){
 	board_initialized = true;
 }
 
+void RelayBoardV3::handle_KinState(std::shared_ptr<const neo_msgs2::msg::KinematicsState> state, vnx::TopicPtr pilot_topic){
+	auto out = pilot::kinematics::KinematicsState::create();
+	out->time = vnx::get_time_micros();
+	out->is_vel_cmd = state->is_vel_cmd;
+	out->is_moving = state->is_moving;
+
+	publish(out, pilot_topic);
+}
 
 void RelayBoardV3::handle_JointTrajectory(std::shared_ptr<const trajectory_msgs::msg::JointTrajectory> trajectory, vnx::TopicPtr pilot_topic){
 	const trajectory_msgs::msg::JointTrajectoryPoint &point = trajectory->points[0];
@@ -437,13 +449,13 @@ void RelayBoardV3::handle_JointTrajectory(std::shared_ptr<const trajectory_msgs:
 			}else if(name == "mpo_700_wheel_back_right_joint"){
 				out->drive_vel.set(pilot::kinematics::position_code_e::BACK_RIGHT, v);
 			}else if(name == "mpo_700_caster_front_left_joint"){
-				out->drive_vel.set(pilot::kinematics::position_code_e::FRONT_LEFT, v);
+				out->steer_pos.set(pilot::kinematics::position_code_e::FRONT_LEFT, p);
 			}else if(name == "mpo_700_caster_front_right_joint"){
-				out->drive_vel.set(pilot::kinematics::position_code_e::FRONT_RIGHT, v);
+				out->steer_pos.set(pilot::kinematics::position_code_e::FRONT_RIGHT, p);
 			}else if(name == "mpo_700_caster_back_left_joint"){
-				out->drive_vel.set(pilot::kinematics::position_code_e::BACK_LEFT, v);
+				out->steer_pos.set(pilot::kinematics::position_code_e::BACK_LEFT, p);
 			}else if(name == "mpo_700_caster_back_right_joint"){
-				out->drive_vel.set(pilot::kinematics::position_code_e::BACK_RIGHT, v);
+				out->steer_pos.set(pilot::kinematics::position_code_e::BACK_RIGHT, p);
 			}else{
 				throw std::logic_error("Unknown joint name: " + name);
 			}
