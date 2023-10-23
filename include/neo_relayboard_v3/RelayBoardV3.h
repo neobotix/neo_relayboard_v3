@@ -22,7 +22,7 @@
 #include <neo_srvs2/srv/set_safety_field.hpp>
 #include <neo_msgs2/msg/relay_board_v3.hpp>
 #include <neo_msgs2/msg/safety_state.hpp>
-
+#include <neo_msgs2/msg/kinematics_state.hpp>
 
 namespace neo_relayboard_v3{
 
@@ -48,6 +48,7 @@ protected:
 	void handle(std::shared_ptr<const pilot::USBoardData> value) override;
 
 	void handle_JointTrajectory(std::shared_ptr<const trajectory_msgs::msg::JointTrajectory> trajectory, vnx::TopicPtr pilot_topic);
+	void handle_KinState(std::shared_ptr<const neo_msgs2::msg::KinematicsState> state, vnx::TopicPtr pilot_topic);
 
 private:
 	std::shared_ptr<rclcpp::Node> nh;
