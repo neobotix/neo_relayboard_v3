@@ -21,7 +21,7 @@
 #include <neo_msgs2/msg/safety_state.hpp>
 
 #include <cmath>
-
+#include <vnx/vnx.h>
 
 namespace neo_relayboard_v3{
 
@@ -75,9 +75,11 @@ void RelayBoardV3::main(){
 
 
 void RelayBoardV3::handle(std::shared_ptr<const pilot::SystemState> value){
-	if (value->is_shutdown) {
+	if (value->is_shutdown && !is_shutdown) {
 		RCLCPP_INFO(nh->get_logger(),"-----------SHUTDOWN Signal from RelayBoardV3----------");
+		is_shutdown = true;
 		rclcpp::shutdown();
+		vnx::trigger_shutdown();
 		usleep(2000);
 		system("sudo halt -p");
 	}
