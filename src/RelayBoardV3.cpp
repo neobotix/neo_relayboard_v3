@@ -76,7 +76,7 @@ void RelayBoardV3::main(){
 
 void RelayBoardV3::handle(std::shared_ptr<const pilot::SystemState> value){
 	if (value->is_shutdown) {
-		RCLCPP_INFO(nh->get_logger(),"-----------SHUTDOWN Signal from RelayBoardV2----------");
+		RCLCPP_INFO(nh->get_logger(),"-----------SHUTDOWN Signal from RelayBoardV3----------");
 		rclcpp::shutdown();
 		usleep(2000);
 		system("sudo halt -p");
