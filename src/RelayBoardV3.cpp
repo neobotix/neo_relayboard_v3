@@ -10,6 +10,7 @@
 #include <pilot/kinematics/differential/DriveCmd.hxx>
 #include <pilot/kinematics/mecanum/DriveCmd.hxx>
 #include <pilot/kinematics/omnidrive/DriveCmd.hxx>
+#include <pilot/kinematics/KinematicsState.hxx>
 
 #include <sensor_msgs/msg/joint_state.hpp>
 #include <sensor_msgs/msg/battery_state.hpp>
@@ -17,28 +18,22 @@
 #include <neo_msgs2/msg/emergency_stop_state.hpp>
 #include <neo_msgs2/msg/io_board.hpp>
 #include <neo_msgs2/msg/us_board_v2.hpp>
+#include <neo_msgs2/msg/relay_board_v3.hpp>
+#include <neo_msgs2/msg/safety_state.hpp>
+#include <neo_msgs2/msg/kinematics_state.hpp>
 
 #include <cmath>
-
+#include <vnx/vnx.h>
 
 namespace neo_relayboard_v3{
 
 using namespace pilot;
-
-inline
-rclcpp::Time pilot_to_ros_time(const int64_t& time_usec)
-{
-	rclcpp::Time time(time_usec * 1000);
-	return time;
-}
-
 
 RelayBoardV3::RelayBoardV3(const std::string &_vnx_name, std::shared_ptr<rclcpp::Node> node_handle):
 	RelayBoardV3Base(_vnx_name)
 {
 	nh = node_handle;
 }
-
 
 void RelayBoardV3::main(){
 	for(const auto &entry : topics_board_to_ros){
@@ -48,7 +43,9 @@ void RelayBoardV3::main(){
 		const auto &ros_type = entry.first;
 		if(ros_type == "trajectory_msgs/JointTrajectory"){
 			bulk_subscribe<trajectory_msgs::msg::JointTrajectory>(std::bind(&RelayBoardV3::handle_JointTrajectory, this, std::placeholders::_1, std::placeholders::_2), entry.second, rclcpp::QoS(rclcpp::KeepLast(max_subscribe_queue_ros)));
-		}else{
+		} else if(ros_type == "neo_msgs2/KinematicsState") {
+			bulk_subscribe<neo_msgs2::msg::KinematicsState>(std::bind(&RelayBoardV3::handle_KinematicsState, this, std::placeholders::_1, std::placeholders::_2), entry.second, rclcpp::QoS(rclcpp::KeepLast(max_subscribe_queue_ros)));
+		} else{
 			log(WARN) << "Unsupported ROS type: " << ros_type;
 		}
 	}
@@ -60,10 +57,10 @@ void RelayBoardV3::main(){
 	module_launcher = std::make_shared<ModuleLauncherClient>(launcher_server);
 
 	srv_set_relay = nh->create_service<neo_srvs2::srv::RelayBoardSetRelay>("set_relay", std::bind(&RelayBoardV3::service_set_relay, this, std::placeholders::_1, std::placeholders::_2));
-	srv_io_board_set_dig_out = nh->create_service<neo_srvs2::srv::IOBoardSetDigOut>("/ioboard/set_digital_output", std::bind(&RelayBoardV3::service_set_digital_output, this, std::placeholders::_1, std::placeholders::_2));
+	srv_io_board_set_dig_out = nh->create_service<neo_srvs2::srv::IOBoardSetDigOut>("ioboard/set_digital_output", std::bind(&RelayBoardV3::service_set_digital_output, this, std::placeholders::_1, std::placeholders::_2));
 	srv_start_charging = nh->create_service<std_srvs::srv::Empty>("start_charging", std::bind(&RelayBoardV3::service_start_charging, this, std::placeholders::_1, std::placeholders::_2));
 	srv_stop_charging = nh->create_service<std_srvs::srv::Empty>("stop_charging", std::bind(&RelayBoardV3::service_stop_charging, this, std::placeholders::_1, std::placeholders::_2));
-	srv_set_LCD_message = nh->create_service<neo_srvs2::srv::RelayBoardSetLCDMsg>("set_LCD_msg", std::bind(&RelayBoardV3::service_set_LCD_message, this, std::placeholders::_1, std::placeholders::_2));
+	srv_set_safety_field = nh->create_service<neo_srvs2::srv::SetSafetyField>("set_safety_field", std::bind(&RelayBoardV3::service_set_safety_field, this, std::placeholders::_1, std::placeholders::_2));
 
 	if(board_init_interval_ms > 0){
 		set_timer_millis(board_init_interval_ms, std::bind(&RelayBoardV3::init_board, this));
@@ -75,18 +72,36 @@ void RelayBoardV3::main(){
 
 
 void RelayBoardV3::handle(std::shared_ptr<const pilot::SystemState> value){
-	// TODO
+	if (value->is_shutdown && !is_shutdown) {
+		RCLCPP_INFO(nh->get_logger(),"-----------SHUTDOWN Signal from RelayBoardV3----------");
+		is_shutdown = true;
+		rclcpp::shutdown();
+		vnx::trigger_shutdown();
+		usleep(2000);
+		system("sudo halt -p");
+	}
 }
 
 
 void RelayBoardV3::handle(std::shared_ptr<const pilot::SafetyState> value){
-	// TODO
-}
+	auto out = std::make_shared<neo_msgs2::msg::SafetyState>();
+	out->time = value->time;
 
+	out->current_safety_field = value->current_safety_field;
+	out->triggered_cutoff_paths = {false};
+
+	for (char path : value->triggered_cutoff_paths) {
+		if (path >= 0 && path < 8) {
+			out->triggered_cutoff_paths[path] = true;
+		}
+	}
+
+	publish_to_ros(out, vnx_sample->topic, rclcpp::QoS(rclcpp::KeepLast(max_publish_queue_ros)));
+}
 
 void RelayBoardV3::handle(std::shared_ptr<const pilot::EmergencyState> value){
 	auto out = std::make_shared<neo_msgs2::msg::EmergencyStopState>();
-	out->header.stamp = pilot_to_ros_time(value->time);
+	out->header.stamp = nh->now();
 
 	out->emergency_button_stop = false;
 	out->scanner_stop = false;
@@ -107,10 +122,9 @@ void RelayBoardV3::handle(std::shared_ptr<const pilot::EmergencyState> value){
 	publish_to_ros(out, vnx_sample->topic, rclcpp::QoS(rclcpp::KeepLast(max_publish_queue_ros)));
 }
 
-
 void RelayBoardV3::handle(std::shared_ptr<const pilot::BatteryState> value){
 	auto out = std::make_shared<sensor_msgs::msg::BatteryState>();
-	out->header.stamp = pilot_to_ros_time(value->time);
+	out->header.stamp = nh->now();
 
 	out->voltage = value->voltage;
 	out->current = value->current;
@@ -141,23 +155,20 @@ void RelayBoardV3::handle(std::shared_ptr<const pilot::BatteryState> value){
 	publish_to_ros(out, vnx_sample->topic, rclcpp::QoS(rclcpp::KeepLast(max_publish_queue_ros)));
 }
 
-
 void RelayBoardV3::handle(std::shared_ptr<const pilot::PowerState> value){
 	// to be merged with BatteryState
 	m_power_state = value;
 }
-
 
 void RelayBoardV3::handle(std::shared_ptr<const pilot::kinematics::bicycle::DriveState> value){
 	const std::string dont_optimize_away_the_library = vnx::to_string(*value);
 	// TODO
 }
 
-
 void RelayBoardV3::handle(std::shared_ptr<const pilot::kinematics::differential::DriveState> value){
 	const std::string dont_optimize_away_the_library = vnx::to_string(*value);
 	auto out = std::make_shared<sensor_msgs::msg::JointState>();
-	out->header.stamp = pilot_to_ros_time(value->time);
+	out->header.stamp = nh->now();
 	out->name.resize(2);
 	out->position.resize(2);
 	out->velocity.resize(2);
@@ -179,7 +190,7 @@ void RelayBoardV3::handle(std::shared_ptr<const pilot::kinematics::differential:
 void RelayBoardV3::handle(std::shared_ptr<const pilot::kinematics::mecanum::DriveState> value){
 	const std::string dont_optimize_away_the_library = vnx::to_string(*value);
 	auto out = std::make_shared<sensor_msgs::msg::JointState>();
-	out->header.stamp = pilot_to_ros_time(value->time);
+	out->header.stamp = nh->now();
 	out->name.resize(4);
 	out->position.resize(4);
 	out->velocity.resize(4);
@@ -209,34 +220,55 @@ void RelayBoardV3::handle(std::shared_ptr<const pilot::kinematics::mecanum::Driv
 void RelayBoardV3::handle(std::shared_ptr<const pilot::kinematics::omnidrive::DriveState> value){
 	const std::string dont_optimize_away_the_library = vnx::to_string(*value);
 	auto out = std::make_shared<sensor_msgs::msg::JointState>();
-	out->header.stamp = pilot_to_ros_time(value->time);
+	out->header.stamp = nh->now();
 	out->name.resize(8);
 	out->position.resize(8);
 	out->velocity.resize(8);
-	out->name[0] = "mpo_700_wheel_front_left_joint";
-	out->name[1] = "mpo_700_caster_front_left_joint";
-	out->name[2] = "mpo_700_wheel_back_left_joint";
-	out->name[3] = "mpo_700_caster_back_left_joint";
-	out->name[4] = "mpo_700_wheel_back_right_joint";
-	out->name[5] = "mpo_700_caster_back_right_joint";
-	out->name[6] = "mpo_700_wheel_front_right_joint";
-	out->name[7] = "mpo_700_caster_front_right_joint";
-	out->position[0] = value->drive_pos.get(pilot::kinematics::position_code_e::FRONT_LEFT);
+	out->name[0] = "wheel_front_left_joint";
+	out->name[1] = "caster_front_left_joint";
+	out->name[2] = "wheel_back_left_joint";
+	out->name[3] = "caster_back_left_joint";
+	out->name[4] = "wheel_back_right_joint";
+	out->name[5] = "caster_back_right_joint";
+	out->name[6] = "wheel_front_right_joint";
+	out->name[7] = "caster_front_right_joint";
+
+	// Handling the drive wheel poses, if there are any
+	if(value->drive_pos.positions.count(pilot::kinematics::position_code_e::FRONT_LEFT)){
+		out->position[0] = value->drive_pos.get(pilot::kinematics::position_code_e::FRONT_LEFT);
+	}
+	if(value->drive_pos.positions.count(pilot::kinematics::position_code_e::BACK_LEFT)){
+		out->position[2] = value->drive_pos.get(pilot::kinematics::position_code_e::BACK_LEFT);
+	}
+	if(value->drive_pos.positions.count(pilot::kinematics::position_code_e::BACK_RIGHT)){
+		out->position[4] = value->drive_pos.get(pilot::kinematics::position_code_e::BACK_RIGHT);
+	}
+	if(value->drive_pos.positions.count(pilot::kinematics::position_code_e::FRONT_RIGHT)){
+		out->position[6] = value->drive_pos.get(pilot::kinematics::position_code_e::FRONT_RIGHT);
+	}
+
+	// Handling the caster velocities, if there are any
+	if(value->steer_vel.velocities.count(pilot::kinematics::position_code_e::FRONT_LEFT)){
+		out->velocity[1] = value->steer_vel.get(pilot::kinematics::position_code_e::FRONT_LEFT);
+	}
+	if(value->steer_vel.velocities.count(pilot::kinematics::position_code_e::BACK_LEFT)){
+		out->velocity[3] = value->steer_vel.get(pilot::kinematics::position_code_e::BACK_LEFT);
+	}
+	if(value->steer_vel.velocities.count(pilot::kinematics::position_code_e::BACK_RIGHT)){
+		out->velocity[5] = value->steer_vel.get(pilot::kinematics::position_code_e::BACK_RIGHT);
+	}
+	if(value->steer_vel.velocities.count(pilot::kinematics::position_code_e::FRONT_RIGHT)){
+		out->velocity[7] = value->steer_vel.get(pilot::kinematics::position_code_e::FRONT_RIGHT);
+	}
+
 	out->position[1] = value->steer_pos.get(pilot::kinematics::position_code_e::FRONT_LEFT);
-	out->position[2] = value->drive_pos.get(pilot::kinematics::position_code_e::BACK_LEFT);
 	out->position[3] = value->steer_pos.get(pilot::kinematics::position_code_e::BACK_LEFT);
-	out->position[4] = value->drive_pos.get(pilot::kinematics::position_code_e::BACK_RIGHT);
 	out->position[5] = value->steer_pos.get(pilot::kinematics::position_code_e::BACK_RIGHT);
-	out->position[6] = value->drive_pos.get(pilot::kinematics::position_code_e::FRONT_RIGHT);
 	out->position[7] = value->steer_pos.get(pilot::kinematics::position_code_e::FRONT_RIGHT);
 	out->velocity[0] = value->drive_vel.get(pilot::kinematics::position_code_e::FRONT_LEFT);
-	out->velocity[1] = value->steer_vel.get(pilot::kinematics::position_code_e::FRONT_LEFT);
 	out->velocity[2] = value->drive_vel.get(pilot::kinematics::position_code_e::BACK_LEFT);
-	out->velocity[3] = value->steer_vel.get(pilot::kinematics::position_code_e::BACK_LEFT);
 	out->velocity[4] = value->drive_vel.get(pilot::kinematics::position_code_e::BACK_RIGHT);
-	out->velocity[5] = value->steer_vel.get(pilot::kinematics::position_code_e::BACK_RIGHT);
 	out->velocity[6] = value->drive_vel.get(pilot::kinematics::position_code_e::FRONT_RIGHT);
-	out->velocity[7] = value->steer_vel.get(pilot::kinematics::position_code_e::FRONT_RIGHT);
 	if(value->has_torque) {
 		out->effort.resize(8);
 		out->effort[0] = value->drive_torque.get(pilot::kinematics::position_code_e::FRONT_LEFT);
@@ -253,13 +285,38 @@ void RelayBoardV3::handle(std::shared_ptr<const pilot::kinematics::omnidrive::Dr
 
 
 void RelayBoardV3::handle(std::shared_ptr<const pilot::RelayBoardV3Data> value){
-	// TODO
+	auto out = std::make_shared<neo_msgs2::msg::RelayBoardV3>();
+
+	out->time = value->time;
+	out->firmware_version = value->firmware_version;
+	out->uptime = value->uptime;
+	out->ambient_temperature = value->ambient_temperature;
+
+	for(int i = 0; i < value->relay_states.size(); ++i) {
+		out->relay_states[i] = value->relay_states[i];
+	}
+
+	for(int i = 0; i < value->relay_states.size(); ++i) {
+		out->digital_input_states[i] = value->digital_input_states[i];
+	}
+
+	for(int i = 0; i < value->relay_states.size(); ++i) {
+		out->keypad_button_states[i] = value->keypad_button_states[i];
+	}
+
+	out->key_switch_off_state = value->key_switch_off_state;
+
+	out->release_structure_state = value->release_structure_state;
+
+	// ToDo add LED states
+
+	publish_to_ros(out, vnx_sample->topic, rclcpp::QoS(rclcpp::KeepLast(max_publish_queue_ros)));
 }
 
 
 void RelayBoardV3::handle(std::shared_ptr<const pilot::IOBoardData> value){
 	auto out = std::make_shared<neo_msgs2::msg::IOBoard>();
-	out->header.stamp = pilot_to_ros_time(value->time);
+	out->header.stamp = nh->now();
 
 	for(size_t i=0; i<std::min(out->digital_inputs.size(), value->digital_input.size()); i++){
 		out->digital_inputs[i] = value->digital_input[i];
@@ -278,7 +335,7 @@ void RelayBoardV3::handle(std::shared_ptr<const pilot::IOBoardData> value){
 void RelayBoardV3::handle(std::shared_ptr<const pilot::USBoardData> value){
 	{
 		auto out = std::make_shared<neo_msgs2::msg::USBoardV2>();
-		out->header.stamp = pilot_to_ros_time(value->time);
+		out->header.stamp = nh->now();
 
 		for(size_t i=0; i<std::min(out->sensor.size(), value->sensor.size()); i++){
 			out->sensor[i] = value->sensor[i];
@@ -294,7 +351,7 @@ void RelayBoardV3::handle(std::shared_ptr<const pilot::USBoardData> value){
 		auto find = topics_to_ros.find(key);
 		if(find != topics_to_ros.end()){
 			auto out = std::make_shared<sensor_msgs::msg::Range>();
-			out->header.stamp = pilot_to_ros_time(value->time);
+			out->header.stamp = nh->now();
 			out->header.frame_id = "us_" + std::to_string(i + 1) + "_link";
 			out->radiation_type = sensor_msgs::msg::Range::ULTRASOUND;
 			out->field_of_view = 1.05;
@@ -353,6 +410,14 @@ void RelayBoardV3::init_board(){
 	board_initialized = true;
 }
 
+void RelayBoardV3::handle_KinematicsState(std::shared_ptr<const neo_msgs2::msg::KinematicsState> state, vnx::TopicPtr pilot_topic){
+	auto out = pilot::kinematics::KinematicsState::create();
+	out->time = vnx::get_time_micros();
+	out->is_vel_cmd = state->is_vel_cmd;
+	out->is_moving = state->is_moving;
+
+	publish(out, pilot_topic);
+}
 
 void RelayBoardV3::handle_JointTrajectory(std::shared_ptr<const trajectory_msgs::msg::JointTrajectory> trajectory, vnx::TopicPtr pilot_topic){
 	const trajectory_msgs::msg::JointTrajectoryPoint &point = trajectory->points[0];
@@ -398,22 +463,22 @@ void RelayBoardV3::handle_JointTrajectory(std::shared_ptr<const trajectory_msgs:
 			const auto &name = trajectory->joint_names[i];
 			auto p = point.positions[i];
 			auto v = point.velocities[i];
-			if(name == "mpo_700_wheel_front_left_joint"){
+			if(name == "wheel_front_left_joint"){
 				out->drive_vel.set(pilot::kinematics::position_code_e::FRONT_LEFT, v);
-			}else if(name == "mpo_700_wheel_front_right_joint"){
+			}else if(name == "wheel_front_right_joint"){
 				out->drive_vel.set(pilot::kinematics::position_code_e::FRONT_RIGHT, v);
-			}else if(name == "mpo_700_wheel_back_left_joint"){
+			}else if(name == "wheel_back_left_joint"){
 				out->drive_vel.set(pilot::kinematics::position_code_e::BACK_LEFT, v);
-			}else if(name == "mpo_700_wheel_back_right_joint"){
+			}else if(name == "wheel_back_right_joint"){
 				out->drive_vel.set(pilot::kinematics::position_code_e::BACK_RIGHT, v);
-			}else if(name == "mpo_700_caster_front_left_joint"){
-				out->drive_vel.set(pilot::kinematics::position_code_e::FRONT_LEFT, v);
-			}else if(name == "mpo_700_caster_front_right_joint"){
-				out->drive_vel.set(pilot::kinematics::position_code_e::FRONT_RIGHT, v);
-			}else if(name == "mpo_700_caster_back_left_joint"){
-				out->drive_vel.set(pilot::kinematics::position_code_e::BACK_LEFT, v);
-			}else if(name == "mpo_700_caster_back_right_joint"){
-				out->drive_vel.set(pilot::kinematics::position_code_e::BACK_RIGHT, v);
+			}else if(name == "caster_front_left_joint"){
+				out->steer_pos.set(pilot::kinematics::position_code_e::FRONT_LEFT, p);
+			}else if(name == "caster_front_right_joint"){
+				out->steer_pos.set(pilot::kinematics::position_code_e::FRONT_RIGHT, p);
+			}else if(name == "caster_back_left_joint"){
+				out->steer_pos.set(pilot::kinematics::position_code_e::BACK_LEFT, p);
+			}else if(name == "caster_back_right_joint"){
+				out->steer_pos.set(pilot::kinematics::position_code_e::BACK_RIGHT, p);
 			}else{
 				throw std::logic_error("Unknown joint name: " + name);
 			}
@@ -477,9 +542,9 @@ bool RelayBoardV3::service_stop_charging(std::shared_ptr<std_srvs::srv::Empty::R
 }
 
 
-bool RelayBoardV3::service_set_LCD_message(std::shared_ptr<neo_srvs2::srv::RelayBoardSetLCDMsg::Request> req, std::shared_ptr<neo_srvs2::srv::RelayBoardSetLCDMsg::Response> res){
+bool RelayBoardV3::service_set_safety_field(std::shared_ptr<neo_srvs2::srv::SetSafetyField::Request> req, std::shared_ptr<neo_srvs2::srv::SetSafetyField::Response> res){
 	try{
-		platform_interface->set_display_text(req->message);
+		safety_interface->select_safety_field(req->field_id);
 		res->success = true;
 		return true;
 	}catch(const std::exception &err){

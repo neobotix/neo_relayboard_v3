@@ -1,3 +1,6 @@
 [submodule "pilot-public"]
 	path = pilot-public
 	url = https://github.com/neobotix/pilot-public
+[submodule "vnx-base"]
+	path = vnx-base
+	url = https://github.com/neobotix/vnx-base.git
