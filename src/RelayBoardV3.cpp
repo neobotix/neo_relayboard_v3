@@ -226,7 +226,7 @@ void RelayBoardV3::handle(std::shared_ptr<const pilot::kinematics::mecanum::Driv
 void RelayBoardV3::handle(std::shared_ptr<const pilot::kinematics::omnidrive::DriveState> value){
 	const std::string dont_optimize_away_the_library = vnx::to_string(*value);
 	auto out = std::make_shared<sensor_msgs::msg::JointState>();
-	out->header.stamp = pilot_to_ros_time(value->time);
+	out->header.stamp = nh->now();
 	out->name.resize(8);
 	out->position.resize(8);
 	out->velocity.resize(8);
