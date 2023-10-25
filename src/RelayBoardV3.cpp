@@ -29,13 +29,6 @@ namespace neo_relayboard_v3{
 
 using namespace pilot;
 
-inline
-rclcpp::Time pilot_to_ros_time(const int64_t& time_usec)
-{
-	rclcpp::Time time(time_usec * 1000);
-	return time;
-}
-
 RelayBoardV3::RelayBoardV3(const std::string &_vnx_name, std::shared_ptr<rclcpp::Node> node_handle):
 	RelayBoardV3Base(_vnx_name)
 {
@@ -108,7 +101,7 @@ void RelayBoardV3::handle(std::shared_ptr<const pilot::SafetyState> value){
 
 void RelayBoardV3::handle(std::shared_ptr<const pilot::EmergencyState> value){
 	auto out = std::make_shared<neo_msgs2::msg::EmergencyStopState>();
-	out->header.stamp = pilot_to_ros_time(value->time);
+	out->header.stamp = nh->now();
 
 	out->emergency_button_stop = false;
 	out->scanner_stop = false;
@@ -131,7 +124,7 @@ void RelayBoardV3::handle(std::shared_ptr<const pilot::EmergencyState> value){
 
 void RelayBoardV3::handle(std::shared_ptr<const pilot::BatteryState> value){
 	auto out = std::make_shared<sensor_msgs::msg::BatteryState>();
-	out->header.stamp = pilot_to_ros_time(value->time);
+	out->header.stamp = nh->now();
 
 	out->voltage = value->voltage;
 	out->current = value->current;
@@ -175,7 +168,7 @@ void RelayBoardV3::handle(std::shared_ptr<const pilot::kinematics::bicycle::Driv
 void RelayBoardV3::handle(std::shared_ptr<const pilot::kinematics::differential::DriveState> value){
 	const std::string dont_optimize_away_the_library = vnx::to_string(*value);
 	auto out = std::make_shared<sensor_msgs::msg::JointState>();
-	out->header.stamp = pilot_to_ros_time(value->time);
+	out->header.stamp = nh->now();
 	out->name.resize(2);
 	out->position.resize(2);
 	out->velocity.resize(2);
@@ -197,7 +190,7 @@ void RelayBoardV3::handle(std::shared_ptr<const pilot::kinematics::differential:
 void RelayBoardV3::handle(std::shared_ptr<const pilot::kinematics::mecanum::DriveState> value){
 	const std::string dont_optimize_away_the_library = vnx::to_string(*value);
 	auto out = std::make_shared<sensor_msgs::msg::JointState>();
-	out->header.stamp = pilot_to_ros_time(value->time);
+	out->header.stamp = nh->now();
 	out->name.resize(4);
 	out->position.resize(4);
 	out->velocity.resize(4);
@@ -294,7 +287,7 @@ void RelayBoardV3::handle(std::shared_ptr<const pilot::RelayBoardV3Data> value){
 
 void RelayBoardV3::handle(std::shared_ptr<const pilot::IOBoardData> value){
 	auto out = std::make_shared<neo_msgs2::msg::IOBoard>();
-	out->header.stamp = pilot_to_ros_time(value->time);
+	out->header.stamp = nh->now();
 
 	for(size_t i=0; i<std::min(out->digital_inputs.size(), value->digital_input.size()); i++){
 		out->digital_inputs[i] = value->digital_input[i];
@@ -313,7 +306,7 @@ void RelayBoardV3::handle(std::shared_ptr<const pilot::IOBoardData> value){
 void RelayBoardV3::handle(std::shared_ptr<const pilot::USBoardData> value){
 	{
 		auto out = std::make_shared<neo_msgs2::msg::USBoardV2>();
-		out->header.stamp = pilot_to_ros_time(value->time);
+		out->header.stamp = nh->now();
 
 		for(size_t i=0; i<std::min(out->sensor.size(), value->sensor.size()); i++){
 			out->sensor[i] = value->sensor[i];
@@ -329,7 +322,7 @@ void RelayBoardV3::handle(std::shared_ptr<const pilot::USBoardData> value){
 		auto find = topics_to_ros.find(key);
 		if(find != topics_to_ros.end()){
 			auto out = std::make_shared<sensor_msgs::msg::Range>();
-			out->header.stamp = pilot_to_ros_time(value->time);
+			out->header.stamp = nh->now();
 			out->header.frame_id = "us_" + std::to_string(i + 1) + "_link";
 			out->radiation_type = sensor_msgs::msg::Range::ULTRASOUND;
 			out->field_of_view = 1.05;
