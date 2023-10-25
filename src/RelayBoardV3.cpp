@@ -95,11 +95,12 @@ void RelayBoardV3::handle(std::shared_ptr<const pilot::SafetyState> value){
 	out->time = value->time;
 
 	out->current_safety_field = value->current_safety_field;
+	out->triggered_cutoff_paths = {false};
 
-	int i = 0;
 	for (char path : value->triggered_cutoff_paths) {
-		out->triggered_cutoff_paths[i] = path;
-		i++;
+		if (path >= 0 && path < 8) {
+			out->triggered_cutoff_paths[path] = true;
+		}
 	}
 
 	publish_to_ros(out, vnx_sample->topic, rclcpp::QoS(rclcpp::KeepLast(max_publish_queue_ros)));
