@@ -28,8 +28,9 @@ int main(int argc, char **argv){
 	vnx::read_config_tree(pilot_config);
 
 	{
-		vnx::Handle<vnx::Terminal> module = new vnx::Terminal("Terminal");
-		module.start_detached();
+		// disable vnx log, since the messages will be printed by ROS
+		vnx::ProcessClient process(process_name);
+		process.pause_log();
 	}
 
 	{

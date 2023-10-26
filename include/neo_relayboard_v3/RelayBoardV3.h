@@ -34,6 +34,7 @@ public:
 protected:
 	void main() override;
 
+	void handle(std::shared_ptr<const vnx::LogMsg> value) override;
 	void handle(std::shared_ptr<const pilot::SystemState> value) override;
 	void handle(std::shared_ptr<const pilot::SafetyState> value) override;
 	void handle(std::shared_ptr<const pilot::EmergencyState> value) override;
