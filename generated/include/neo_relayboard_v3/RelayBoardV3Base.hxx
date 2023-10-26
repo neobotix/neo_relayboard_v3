@@ -18,6 +18,7 @@
 #include <pilot/kinematics/differential/DriveState.hxx>
 #include <pilot/kinematics/mecanum/DriveState.hxx>
 #include <pilot/kinematics/omnidrive/DriveState.hxx>
+#include <vnx/LogMsg.hxx>
 #include <vnx/Module.h>
 #include <vnx/Object.hpp>
 #include <vnx/TopicPtr.hpp>
@@ -74,6 +75,7 @@ public:
 protected:
 	using Super::handle;
 	
+	virtual void handle(std::shared_ptr<const ::vnx::LogMsg> _value) {}
 	virtual void handle(std::shared_ptr<const ::pilot::SystemState> _value) {}
 	virtual void handle(std::shared_ptr<const ::pilot::SafetyState> _value) {}
 	virtual void handle(std::shared_ptr<const ::pilot::EmergencyState> _value) {}
