@@ -1,4 +1,5 @@
 #include <vnx/vnx.h>
+#include <vnx/Server.h>
 #include <vnx/Proxy.h>
 #include <vnx/Terminal.h>
 
@@ -29,6 +30,11 @@ int main(int argc, char **argv){
 
 	{
 		vnx::Handle<vnx::Terminal> module = new vnx::Terminal("Terminal");
+		module.start_detached();
+	}
+
+	{
+		vnx::Handle<vnx::Server> module = new vnx::Server("TimeServer", vnx::Endpoint::from_url("0.0.0.0:5555"));
 		module.start_detached();
 	}
 
