@@ -34,7 +34,7 @@ int main(int argc, char **argv){
 	}
 
 	{
-		vnx::Handle<vnx::Server> module = new vnx::Server("TimeServer", vnx::Endpoint::from_url("0.0.0.0:5555"));
+		vnx::Handle<vnx::Server> module = new vnx::Server("TcpServer", vnx::Endpoint::from_url("0.0.0.0:5555"));
 		module.start_detached();
 	}
 
