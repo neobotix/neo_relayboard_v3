@@ -24,6 +24,7 @@
 
 #include <cmath>
 #include <vnx/vnx.h>
+#include <unistd.h>
 
 namespace neo_relayboard_v3{
 
