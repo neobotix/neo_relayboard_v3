@@ -72,6 +72,28 @@ void RelayBoardV3::main(){
 }
 
 
+void RelayBoardV3::handle(std::shared_ptr<const vnx::LogMsg> value){
+	const std::string message = value->get_output();
+	auto logger = nh->get_logger();
+
+	switch(value->level){
+	case ERROR:
+		RCLCPP_ERROR(logger, message);
+		break;
+	case WARN:
+		RCLCPP_WARN(logger, message);
+		break;
+	case DEBUG:
+		RCLCPP_DEBUG(logger, message);
+		break;
+	case INFO:
+	default:
+		RCLCPP_INFO(logger, message);
+		break;
+	}
+}
+
+
 void RelayBoardV3::handle(std::shared_ptr<const pilot::SystemState> value){
 	if (value->is_shutdown && !is_shutdown) {
 		RCLCPP_INFO(nh->get_logger(),"-----------SHUTDOWN Signal from RelayBoardV3----------");
@@ -497,8 +519,7 @@ bool RelayBoardV3::service_set_relay(std::shared_ptr<neo_srvs2::srv::RelayBoardS
 		res->success = true;
 		return true;
 	}catch(const std::exception &err){
-		const std::string error = "Service call failed with: " + std::string(err.what());
-		RCLCPP_ERROR_STREAM(nh->get_logger(), error);
+		log(WARN) << "Service call failed with: " << err.what();
 		res->success = false;
 		return false;
 	}
@@ -511,8 +532,7 @@ bool RelayBoardV3::service_set_digital_output(std::shared_ptr<neo_srvs2::srv::IO
 		res->success = true;
 		return true;
 	}catch(const std::exception &err){
-		const std::string error = "Service call failed with: " + std::string(err.what());
-		RCLCPP_ERROR_STREAM(nh->get_logger(), error);
+		log(WARN) << "Service call failed with: " << err.what();
 		res->success = false;
 		return false;
 	}
@@ -524,8 +544,7 @@ bool RelayBoardV3::service_start_charging(std::shared_ptr<std_srvs::srv::Empty::
 		platform_interface->start_charging();
 		return true;
 	}catch(const std::exception &err){
-		const std::string error = "Service call failed with: " + std::string(err.what());
-		RCLCPP_ERROR_STREAM(nh->get_logger(), error);
+		log(WARN) << "Service call failed with: " << err.what();
 		return false;
 	}
 }
@@ -536,8 +555,7 @@ bool RelayBoardV3::service_stop_charging(std::shared_ptr<std_srvs::srv::Empty::R
 		platform_interface->stop_charging();
 		return true;
 	}catch(const std::exception &err){
-		const std::string error = "Service call failed with: " + std::string(err.what());
-		RCLCPP_ERROR_STREAM(nh->get_logger(), error);
+		log(WARN) << "Service call failed with: " << err.what();
 		return false;
 	}
 }
@@ -549,8 +567,7 @@ bool RelayBoardV3::service_set_safety_field(std::shared_ptr<neo_srvs2::srv::SetS
 		res->success = true;
 		return true;
 	}catch(const std::exception &err){
-		const std::string error = "Service call failed with: " + std::string(err.what());
-		RCLCPP_ERROR_STREAM(nh->get_logger(), error);
+		log(WARN) << "Service call failed with: " << err.what();
 		res->success = false;
 		return false;
 	}

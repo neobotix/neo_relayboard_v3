@@ -18,6 +18,7 @@
 #include <pilot/kinematics/differential/DriveState.hxx>
 #include <pilot/kinematics/mecanum/DriveState.hxx>
 #include <pilot/kinematics/omnidrive/DriveState.hxx>
+#include <vnx/LogMsg.hxx>
 #include <vnx/Module.h>
 #include <vnx/Object.hpp>
 #include <vnx/TopicPtr.hpp>

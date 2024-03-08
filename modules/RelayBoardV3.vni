@@ -17,6 +17,7 @@ module RelayBoardV3{
 	
 	pilot.kinematic_type_e kinematic_type;
 	
+	void handle(vnx.LogMsg value);
 	void handle(pilot.SystemState value);
 	void handle(pilot.SafetyState value);
 	void handle(pilot.EmergencyState value);
