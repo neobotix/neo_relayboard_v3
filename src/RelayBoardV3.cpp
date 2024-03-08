@@ -78,17 +78,17 @@ void RelayBoardV3::handle(std::shared_ptr<const vnx::LogMsg> value){
 
 	switch(value->level){
 	case ERROR:
-		RCLCPP_ERROR(logger, message);
+		RCLCPP_ERROR(logger, message.c_str());
 		break;
 	case WARN:
-		RCLCPP_WARN(logger, message);
+		RCLCPP_WARN(logger, message.c_str());
 		break;
 	case DEBUG:
-		RCLCPP_DEBUG(logger, message);
+		RCLCPP_DEBUG(logger, message.c_str());
 		break;
 	case INFO:
 	default:
-		RCLCPP_INFO(logger, message);
+		RCLCPP_INFO(logger, message.c_str());
 		break;
 	}
 }
