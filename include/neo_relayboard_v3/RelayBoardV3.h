@@ -79,7 +79,7 @@ private:
 	rclcpp::Service<std_srvs::srv::Empty>::SharedPtr srv_stop_charging;
 	rclcpp::Service<std_srvs::srv::Empty>::SharedPtr srv_shutdown_platform;
 	rclcpp::Service<neo_srvs2::srv::SetSafetyField>::SharedPtr srv_set_safety_field;
-	rclcpp::Service<neo_srvs2::srv::RelayBoardSetLED>::SharedPtr srv_set_led;
+	rclcpp::Service<neo_srvs2::srv::RelayBoardSetLED>::SharedPtr srv_set_leds;
 
 	bool is_shutdown = false;
 
@@ -89,7 +89,7 @@ private:
 	bool service_stop_charging(std::shared_ptr<std_srvs::srv::Empty::Request> req, std::shared_ptr<std_srvs::srv::Empty::Response> res);
 	bool service_shutdown_platform(std::shared_ptr<std_srvs::srv::Empty::Request> req, std::shared_ptr<std_srvs::srv::Empty::Response> res);
 	bool service_set_safety_field(std::shared_ptr<neo_srvs2::srv::SetSafetyField::Request> req, std::shared_ptr<neo_srvs2::srv::SetSafetyField::Response> res);
-	bool service_set_led(std::shared_ptr<neo_srvs2::srv::RelayBoardSetLED::Request> req, std::shared_ptr<neo_srvs2::srv::RelayBoardSetLED::Response> res);
+	bool service_set_leds(std::shared_ptr<neo_srvs2::srv::RelayBoardSetLED::Request> req, std::shared_ptr<neo_srvs2::srv::RelayBoardSetLED::Response> res);
 };
 
 

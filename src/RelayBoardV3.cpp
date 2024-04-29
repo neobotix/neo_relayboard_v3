@@ -71,7 +71,7 @@ void RelayBoardV3::main(){
 	srv_stop_charging = nh->create_service<std_srvs::srv::Empty>("stop_charging", std::bind(&RelayBoardV3::service_stop_charging, this, std::placeholders::_1, std::placeholders::_2));
 	srv_shutdown_platform = nh->create_service<std_srvs::srv::Empty>("shutdown_platform", std::bind(&RelayBoardV3::service_shutdown_platform, this, std::placeholders::_1, std::placeholders::_2));
 	srv_set_safety_field = nh->create_service<neo_srvs2::srv::SetSafetyField>("set_safety_field", std::bind(&RelayBoardV3::service_set_safety_field, this, std::placeholders::_1, std::placeholders::_2));
-	srv_set_led = nh->create_service<neo_srvs2::srv::RelayBoardSetLED>("set_led", std::bind(&RelayBoardV3::service_set_led, this, std::placeholders::_1, std::placeholders::_2));
+	srv_set_leds = nh->create_service<neo_srvs2::srv::RelayBoardSetLED>("set_leds", std::bind(&RelayBoardV3::service_set_leds, this, std::placeholders::_1, std::placeholders::_2));
 
 	if(board_init_interval_ms > 0){
 		set_timer_millis(board_init_interval_ms, std::bind(&RelayBoardV3::init_board, this));
@@ -601,7 +601,7 @@ bool RelayBoardV3::service_shutdown_platform(std::shared_ptr<std_srvs::srv::Empt
 	}
 }
 
-bool RelayBoardV3::service_set_led(std::shared_ptr<neo_srvs2::srv::RelayBoardSetLED::Request> req, std::shared_ptr<neo_srvs2::srv::RelayBoardSetLED::Response> res){
+bool RelayBoardV3::service_set_leds(std::shared_ptr<neo_srvs2::srv::RelayBoardSetLED::Request> req, std::shared_ptr<neo_srvs2::srv::RelayBoardSetLED::Response> res){
 	try{
 		std::map<led_color_e, double> led_state;
 		led_state[led_color_e::RED] = req->led_state.r;
