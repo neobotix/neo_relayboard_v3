@@ -68,6 +68,7 @@ void RelayBoardV3::main(){
 	srv_io_board_set_dig_out = nh->create_service<neo_srvs2::srv::IOBoardSetDigOut>("ioboard/set_digital_output", std::bind(&RelayBoardV3::service_set_digital_output, this, std::placeholders::_1, std::placeholders::_2));
 	srv_start_charging = nh->create_service<std_srvs::srv::Empty>("start_charging", std::bind(&RelayBoardV3::service_start_charging, this, std::placeholders::_1, std::placeholders::_2));
 	srv_stop_charging = nh->create_service<std_srvs::srv::Empty>("stop_charging", std::bind(&RelayBoardV3::service_stop_charging, this, std::placeholders::_1, std::placeholders::_2));
+	srv_shutdown_platform = nh->create_service<std_srvs::srv::Empty>("shutdown_platform", std::bind(&RelayBoardV3::service_shutdown_platform, this, std::placeholders::_1, std::placeholders::_2));
 	srv_set_safety_field = nh->create_service<neo_srvs2::srv::SetSafetyField>("set_safety_field", std::bind(&RelayBoardV3::service_set_safety_field, this, std::placeholders::_1, std::placeholders::_2));
 
 	if(board_init_interval_ms > 0){
@@ -580,8 +581,14 @@ bool RelayBoardV3::service_set_safety_field(std::shared_ptr<neo_srvs2::srv::SetS
 	}
 }
 
+bool RelayBoardV3::service_shutdown_platform(std::shared_ptr<std_srvs::srv::Empty::Request> req, std::shared_ptr<std_srvs::srv::Empty::Response> res){
+	try{
+		platform_interface->shutdown();
+		return true;
+	}catch(const std::exception &err){
+		log(WARN) << "Service call failed with: " << err.what();
+		return false;
+	}
+}
 
 } // neo_relayboard_v3
-
-
-
