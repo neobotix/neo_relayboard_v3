@@ -21,6 +21,7 @@
 #include <neo_msgs2/msg/relay_board_v3.hpp>
 #include <neo_msgs2/msg/safety_state.hpp>
 #include <neo_msgs2/msg/kinematics_state.hpp>
+#include <std_msgs/msg/color_rgba.hpp>
 
 #include <cmath>
 #include <vnx/vnx.h>
@@ -70,6 +71,7 @@ void RelayBoardV3::main(){
 	srv_stop_charging = nh->create_service<std_srvs::srv::Empty>("stop_charging", std::bind(&RelayBoardV3::service_stop_charging, this, std::placeholders::_1, std::placeholders::_2));
 	srv_shutdown_platform = nh->create_service<std_srvs::srv::Empty>("shutdown_platform", std::bind(&RelayBoardV3::service_shutdown_platform, this, std::placeholders::_1, std::placeholders::_2));
 	srv_set_safety_field = nh->create_service<neo_srvs2::srv::SetSafetyField>("set_safety_field", std::bind(&RelayBoardV3::service_set_safety_field, this, std::placeholders::_1, std::placeholders::_2));
+	srv_set_leds = nh->create_service<neo_srvs2::srv::RelayBoardSetLED>("set_leds", std::bind(&RelayBoardV3::service_set_leds, this, std::placeholders::_1, std::placeholders::_2));
 
 	if(board_init_interval_ms > 0){
 		set_timer_millis(board_init_interval_ms, std::bind(&RelayBoardV3::init_board, this));
@@ -339,11 +341,19 @@ void RelayBoardV3::handle(std::shared_ptr<const pilot::RelayBoardV3Data> value){
 
 	out->release_structure_state = value->release_structure_state;
 
-	// ToDo add LED states
+	// Iterate over the LED color map
+	for (const auto& pair: value->led_states) {
+		if (pair.first == led_color_e::RED) {
+			out->led_state.r = pair.second;
+		} else if (pair.first == led_color_e::GREEN) {
+			out->led_state.g = pair.second;
+		} else if (pair.first == led_color_e::BLUE) {
+			out->led_state.b = pair.second;
+		}
+	}
 
 	publish_to_ros(out, vnx_sample->topic, rclcpp::QoS(rclcpp::KeepLast(max_publish_queue_ros)));
 }
-
 
 void RelayBoardV3::handle(std::shared_ptr<const pilot::IOBoardData> value){
 	auto out = std::make_shared<neo_msgs2::msg::IOBoard>();
@@ -587,6 +597,22 @@ bool RelayBoardV3::service_shutdown_platform(std::shared_ptr<std_srvs::srv::Empt
 		return true;
 	}catch(const std::exception &err){
 		log(WARN) << "Service call failed with: " << err.what();
+		return false;
+	}
+}
+
+bool RelayBoardV3::service_set_leds(std::shared_ptr<neo_srvs2::srv::RelayBoardSetLED::Request> req, std::shared_ptr<neo_srvs2::srv::RelayBoardSetLED::Response> res){
+	try{
+		std::map<led_color_e, double> led_state;
+		led_state[led_color_e::RED] = req->led_state.r;
+		led_state[led_color_e::GREEN] = req->led_state.g;
+		led_state[led_color_e::BLUE] = req->led_state.b;
+		platform_interface->set_leds(led_state);
+		res->success = true;
+		return true;
+	}catch(const std::exception &err){
+		log(WARN) << "Service call failed with: " << err.what();
+		res->success = false;
 		return false;
 	}
 }
