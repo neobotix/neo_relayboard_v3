@@ -345,9 +345,9 @@ void RelayBoardV3::handle(std::shared_ptr<const pilot::RelayBoardV3Data> value){
 	for (const auto& pair: value->led_states) {
 		if (pair.first == led_color_e::RED) {
 			out->led_state.r = pair.second;
-		} else if (pair.second == led_color_e::GREEN) {
+		} else if (pair.first == led_color_e::GREEN) {
 			out->led_state.g = pair.second;
-		} else if (pair.second == led_color_e::BLUE) {
+		} else if (pair.first == led_color_e::BLUE) {
 			out->led_state.b = pair.second;
 		}
 	}
