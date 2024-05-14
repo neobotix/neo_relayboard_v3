@@ -36,6 +36,7 @@ protected:
 	void main() override;
 
 	void handle(std::shared_ptr<const vnx::LogMsg> value) override;
+	void handle(std::shared_ptr<const pilot::Incident> value) override;
 	void handle(std::shared_ptr<const pilot::SystemState> value) override;
 	void handle(std::shared_ptr<const pilot::SafetyState> value) override;
 	void handle(std::shared_ptr<const pilot::EmergencyState> value) override;
@@ -62,6 +63,7 @@ private:
 	std::shared_ptr<pilot::ModuleLauncherClient> module_launcher;
 
 	bool board_initialized = false;
+	std::map<std::tuple<std::string, std::string, std::string>, std::shared_ptr<const pilot::Incident>> incident_map;
 	std::shared_ptr<const pilot::PowerState> m_power_state;
 
 	template<class T>
@@ -72,6 +74,8 @@ private:
 	void publish_to_ros(std::shared_ptr<T> sample, vnx::TopicPtr pilot_topic, const rclcpp::QoS &qos);
 
 	void init_board();
+	void update();
+	void on_incident(std::shared_ptr<const pilot::Incident> value);
 
 	rclcpp::Service<neo_srvs2::srv::RelayBoardSetRelay>::SharedPtr srv_set_relay;
 	rclcpp::Service<neo_srvs2::srv::IOBoardSetDigOut>::SharedPtr srv_io_board_set_dig_out;
