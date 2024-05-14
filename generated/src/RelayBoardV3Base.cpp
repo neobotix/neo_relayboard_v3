@@ -7,6 +7,7 @@
 #include <pilot/BatteryState.hxx>
 #include <pilot/EmergencyState.hxx>
 #include <pilot/IOBoardData.hxx>
+#include <pilot/Incident.hxx>
 #include <pilot/PowerState.hxx>
 #include <pilot/RelayBoardV3Data.hxx>
 #include <pilot/SafetyState.hxx>
@@ -47,7 +48,7 @@ namespace neo_relayboard_v3 {
 
 
 const vnx::Hash64 RelayBoardV3Base::VNX_TYPE_HASH(0x59c86a8cb3f030daull);
-const vnx::Hash64 RelayBoardV3Base::VNX_CODE_HASH(0x18573e85b2ea21deull);
+const vnx::Hash64 RelayBoardV3Base::VNX_CODE_HASH(0xc3468ffb482f11aull);
 
 RelayBoardV3Base::RelayBoardV3Base(const std::string& _vnx_name)
 	:	Module::Module(_vnx_name)
@@ -60,6 +61,7 @@ RelayBoardV3Base::RelayBoardV3Base(const std::string& _vnx_name)
 	vnx::read_config(vnx_name + ".safety_server", safety_server);
 	vnx::read_config(vnx_name + ".launcher_server", launcher_server);
 	vnx::read_config(vnx_name + ".board_init_interval_ms", board_init_interval_ms);
+	vnx::read_config(vnx_name + ".update_interval_ms", update_interval_ms);
 	vnx::read_config(vnx_name + ".remote_config", remote_config);
 	vnx::read_config(vnx_name + ".max_publish_queue_ros", max_publish_queue_ros);
 	vnx::read_config(vnx_name + ".max_subscribe_queue_ros", max_subscribe_queue_ros);
@@ -89,10 +91,11 @@ void RelayBoardV3Base::accept(vnx::Visitor& _visitor) const {
 	_visitor.type_field(_type_code->fields[5], 5); vnx::accept(_visitor, safety_server);
 	_visitor.type_field(_type_code->fields[6], 6); vnx::accept(_visitor, launcher_server);
 	_visitor.type_field(_type_code->fields[7], 7); vnx::accept(_visitor, board_init_interval_ms);
-	_visitor.type_field(_type_code->fields[8], 8); vnx::accept(_visitor, remote_config);
-	_visitor.type_field(_type_code->fields[9], 9); vnx::accept(_visitor, max_publish_queue_ros);
-	_visitor.type_field(_type_code->fields[10], 10); vnx::accept(_visitor, max_subscribe_queue_ros);
-	_visitor.type_field(_type_code->fields[11], 11); vnx::accept(_visitor, kinematic_type);
+	_visitor.type_field(_type_code->fields[8], 8); vnx::accept(_visitor, update_interval_ms);
+	_visitor.type_field(_type_code->fields[9], 9); vnx::accept(_visitor, remote_config);
+	_visitor.type_field(_type_code->fields[10], 10); vnx::accept(_visitor, max_publish_queue_ros);
+	_visitor.type_field(_type_code->fields[11], 11); vnx::accept(_visitor, max_subscribe_queue_ros);
+	_visitor.type_field(_type_code->fields[12], 12); vnx::accept(_visitor, kinematic_type);
 	_visitor.type_end(*_type_code);
 }
 
@@ -106,6 +109,7 @@ void RelayBoardV3Base::write(std::ostream& _out) const {
 	_out << ", \"safety_server\": "; vnx::write(_out, safety_server);
 	_out << ", \"launcher_server\": "; vnx::write(_out, launcher_server);
 	_out << ", \"board_init_interval_ms\": "; vnx::write(_out, board_init_interval_ms);
+	_out << ", \"update_interval_ms\": "; vnx::write(_out, update_interval_ms);
 	_out << ", \"remote_config\": "; vnx::write(_out, remote_config);
 	_out << ", \"max_publish_queue_ros\": "; vnx::write(_out, max_publish_queue_ros);
 	_out << ", \"max_subscribe_queue_ros\": "; vnx::write(_out, max_subscribe_queue_ros);
@@ -130,6 +134,7 @@ vnx::Object RelayBoardV3Base::to_object() const {
 	_object["safety_server"] = safety_server;
 	_object["launcher_server"] = launcher_server;
 	_object["board_init_interval_ms"] = board_init_interval_ms;
+	_object["update_interval_ms"] = update_interval_ms;
 	_object["remote_config"] = remote_config;
 	_object["max_publish_queue_ros"] = max_publish_queue_ros;
 	_object["max_subscribe_queue_ros"] = max_subscribe_queue_ros;
@@ -163,6 +168,8 @@ void RelayBoardV3Base::from_object(const vnx::Object& _object) {
 			_entry.second.to(topics_ros_to_board);
 		} else if(_entry.first == "topics_to_ros") {
 			_entry.second.to(topics_to_ros);
+		} else if(_entry.first == "update_interval_ms") {
+			_entry.second.to(update_interval_ms);
 		}
 	}
 }
@@ -191,6 +198,9 @@ vnx::Variant RelayBoardV3Base::get_field(const std::string& _name) const {
 	}
 	if(_name == "board_init_interval_ms") {
 		return vnx::Variant(board_init_interval_ms);
+	}
+	if(_name == "update_interval_ms") {
+		return vnx::Variant(update_interval_ms);
 	}
 	if(_name == "remote_config") {
 		return vnx::Variant(remote_config);
@@ -224,6 +234,8 @@ void RelayBoardV3Base::set_field(const std::string& _name, const vnx::Variant& _
 		_value.to(launcher_server);
 	} else if(_name == "board_init_interval_ms") {
 		_value.to(board_init_interval_ms);
+	} else if(_name == "update_interval_ms") {
+		_value.to(update_interval_ms);
 	} else if(_name == "remote_config") {
 		_value.to(remote_config);
 	} else if(_name == "max_publish_queue_ros") {
@@ -261,7 +273,7 @@ std::shared_ptr<vnx::TypeCode> RelayBoardV3Base::static_create_type_code() {
 	auto type_code = std::make_shared<vnx::TypeCode>();
 	type_code->name = "neo_relayboard_v3.RelayBoardV3";
 	type_code->type_hash = vnx::Hash64(0x59c86a8cb3f030daull);
-	type_code->code_hash = vnx::Hash64(0x18573e85b2ea21deull);
+	type_code->code_hash = vnx::Hash64(0xc3468ffb482f11aull);
 	type_code->is_native = true;
 	type_code->native_size = sizeof(::neo_relayboard_v3::RelayBoardV3Base);
 	type_code->depends.resize(1);
@@ -276,7 +288,7 @@ std::shared_ptr<vnx::TypeCode> RelayBoardV3Base::static_create_type_code() {
 	type_code->methods[6] = ::vnx::ModuleInterface_vnx_restart::static_get_type_code();
 	type_code->methods[7] = ::vnx::ModuleInterface_vnx_stop::static_get_type_code();
 	type_code->methods[8] = ::vnx::ModuleInterface_vnx_self_test::static_get_type_code();
-	type_code->fields.resize(12);
+	type_code->fields.resize(13);
 	{
 		auto& field = type_code->fields[0];
 		field.is_extended = true;
@@ -331,26 +343,33 @@ std::shared_ptr<vnx::TypeCode> RelayBoardV3Base::static_create_type_code() {
 	}
 	{
 		auto& field = type_code->fields[8];
+		field.data_size = 4;
+		field.name = "update_interval_ms";
+		field.value = vnx::to_string(500);
+		field.code = {7};
+	}
+	{
+		auto& field = type_code->fields[9];
 		field.is_extended = true;
 		field.name = "remote_config";
 		field.code = {24};
 	}
 	{
-		auto& field = type_code->fields[9];
+		auto& field = type_code->fields[10];
 		field.data_size = 4;
 		field.name = "max_publish_queue_ros";
 		field.value = vnx::to_string(1);
 		field.code = {7};
 	}
 	{
-		auto& field = type_code->fields[10];
+		auto& field = type_code->fields[11];
 		field.data_size = 4;
 		field.name = "max_subscribe_queue_ros";
 		field.value = vnx::to_string(1);
 		field.code = {7};
 	}
 	{
-		auto& field = type_code->fields[11];
+		auto& field = type_code->fields[12];
 		field.is_extended = true;
 		field.name = "kinematic_type";
 		field.code = {19, 0};
@@ -371,6 +390,9 @@ void RelayBoardV3Base::vnx_handle_switch(std::shared_ptr<const vnx::Value> _valu
 				return;
 			case 0x1ca79bd1e6cc8028ull:
 				handle(std::static_pointer_cast<const ::pilot::IOBoardData>(_value));
+				return;
+			case 0x80c07ca1b021de76ull:
+				handle(std::static_pointer_cast<const ::pilot::Incident>(_value));
 				return;
 			case 0x83624e8e635643efull:
 				handle(std::static_pointer_cast<const ::pilot::PowerState>(_value));
@@ -513,10 +535,13 @@ void read(TypeInput& in, ::neo_relayboard_v3::RelayBoardV3Base& value, const Typ
 		if(const auto* const _field = type_code->field_map[7]) {
 			vnx::read_value(_buf + _field->offset, value.board_init_interval_ms, _field->code.data());
 		}
-		if(const auto* const _field = type_code->field_map[9]) {
-			vnx::read_value(_buf + _field->offset, value.max_publish_queue_ros, _field->code.data());
+		if(const auto* const _field = type_code->field_map[8]) {
+			vnx::read_value(_buf + _field->offset, value.update_interval_ms, _field->code.data());
 		}
 		if(const auto* const _field = type_code->field_map[10]) {
+			vnx::read_value(_buf + _field->offset, value.max_publish_queue_ros, _field->code.data());
+		}
+		if(const auto* const _field = type_code->field_map[11]) {
 			vnx::read_value(_buf + _field->offset, value.max_subscribe_queue_ros, _field->code.data());
 		}
 	}
@@ -529,8 +554,8 @@ void read(TypeInput& in, ::neo_relayboard_v3::RelayBoardV3Base& value, const Typ
 			case 4: vnx::read(in, value.platform_interface_server, type_code, _field->code.data()); break;
 			case 5: vnx::read(in, value.safety_server, type_code, _field->code.data()); break;
 			case 6: vnx::read(in, value.launcher_server, type_code, _field->code.data()); break;
-			case 8: vnx::read(in, value.remote_config, type_code, _field->code.data()); break;
-			case 11: vnx::read(in, value.kinematic_type, type_code, _field->code.data()); break;
+			case 9: vnx::read(in, value.remote_config, type_code, _field->code.data()); break;
+			case 12: vnx::read(in, value.kinematic_type, type_code, _field->code.data()); break;
 			default: vnx::skip(in, type_code, _field->code.data());
 		}
 	}
@@ -549,10 +574,11 @@ void write(TypeOutput& out, const ::neo_relayboard_v3::RelayBoardV3Base& value, 
 	else if(code && code[0] == CODE_STRUCT) {
 		type_code = type_code->depends[code[1]];
 	}
-	char* const _buf = out.write(12);
+	char* const _buf = out.write(16);
 	vnx::write_value(_buf + 0, value.board_init_interval_ms);
-	vnx::write_value(_buf + 4, value.max_publish_queue_ros);
-	vnx::write_value(_buf + 8, value.max_subscribe_queue_ros);
+	vnx::write_value(_buf + 4, value.update_interval_ms);
+	vnx::write_value(_buf + 8, value.max_publish_queue_ros);
+	vnx::write_value(_buf + 12, value.max_subscribe_queue_ros);
 	vnx::write(out, value.topics_board_to_ros, type_code, type_code->fields[0].code.data());
 	vnx::write(out, value.topics_ros_to_board, type_code, type_code->fields[1].code.data());
 	vnx::write(out, value.topics_from_board, type_code, type_code->fields[2].code.data());
@@ -560,8 +586,8 @@ void write(TypeOutput& out, const ::neo_relayboard_v3::RelayBoardV3Base& value, 
 	vnx::write(out, value.platform_interface_server, type_code, type_code->fields[4].code.data());
 	vnx::write(out, value.safety_server, type_code, type_code->fields[5].code.data());
 	vnx::write(out, value.launcher_server, type_code, type_code->fields[6].code.data());
-	vnx::write(out, value.remote_config, type_code, type_code->fields[8].code.data());
-	vnx::write(out, value.kinematic_type, type_code, type_code->fields[11].code.data());
+	vnx::write(out, value.remote_config, type_code, type_code->fields[9].code.data());
+	vnx::write(out, value.kinematic_type, type_code, type_code->fields[12].code.data());
 }
 
 void read(std::istream& in, ::neo_relayboard_v3::RelayBoardV3Base& value) {

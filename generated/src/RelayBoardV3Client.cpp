@@ -6,6 +6,7 @@
 #include <pilot/BatteryState.hxx>
 #include <pilot/EmergencyState.hxx>
 #include <pilot/IOBoardData.hxx>
+#include <pilot/Incident.hxx>
 #include <pilot/PowerState.hxx>
 #include <pilot/RelayBoardV3Data.hxx>
 #include <pilot/SafetyState.hxx>

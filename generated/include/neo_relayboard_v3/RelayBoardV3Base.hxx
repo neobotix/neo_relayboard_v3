@@ -8,6 +8,7 @@
 #include <pilot/BatteryState.hxx>
 #include <pilot/EmergencyState.hxx>
 #include <pilot/IOBoardData.hxx>
+#include <pilot/Incident.hxx>
 #include <pilot/PowerState.hxx>
 #include <pilot/RelayBoardV3Data.hxx>
 #include <pilot/SafetyState.hxx>
@@ -37,6 +38,7 @@ public:
 	std::string safety_server = "SafetyInterface";
 	std::string launcher_server = "RelayBoardV3Launcher";
 	int32_t board_init_interval_ms = 1500;
+	int32_t update_interval_ms = 500;
 	::vnx::Object remote_config;
 	int32_t max_publish_queue_ros = 1;
 	int32_t max_subscribe_queue_ros = 1;
@@ -76,6 +78,7 @@ protected:
 	using Super::handle;
 	
 	virtual void handle(std::shared_ptr<const ::vnx::LogMsg> _value) {}
+	virtual void handle(std::shared_ptr<const ::pilot::Incident> _value) {}
 	virtual void handle(std::shared_ptr<const ::pilot::SystemState> _value) {}
 	virtual void handle(std::shared_ptr<const ::pilot::SafetyState> _value) {}
 	virtual void handle(std::shared_ptr<const ::pilot::EmergencyState> _value) {}

@@ -10,6 +10,7 @@ module RelayBoardV3{
 	string safety_server = "SafetyInterface";
 	string launcher_server = "RelayBoardV3Launcher";
 	int board_init_interval_ms = 1500;
+	int update_interval_ms = 500;
 	vnx.Object remote_config;
 	
 	int max_publish_queue_ros = 1;
@@ -18,6 +19,7 @@ module RelayBoardV3{
 	pilot.kinematic_type_e kinematic_type;
 	
 	void handle(vnx.LogMsg value);
+	void handle(pilot.Incident value);
 	void handle(pilot.SystemState value);
 	void handle(pilot.SafetyState value);
 	void handle(pilot.EmergencyState value);
