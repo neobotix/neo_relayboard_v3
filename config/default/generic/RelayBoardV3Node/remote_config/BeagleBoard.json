@@ -41,9 +41,9 @@
 	],
 	"led_pwms": {
 		"RED": [7, 0],
-		"GREEN": [4, 1],
+		"GREEN": [5, 1],
 		"BLUE": [7, 1],
-		"WHITE": [4, 0]
+		"WHITE": [5, 0]
 	},
 	"battery_voltage_ain": 0,
 	"charge_current_ain": 2,
@@ -131,6 +131,14 @@
 			[1, {"RED": 0, "GREEN": 0, "BLUE": 0}]
 		]
 	},
+	"led_charging_init": {
+		"type": "TOGGLE",
+		"stops": [
+			[0, {"RED": 0, "GREEN": 1, "BLUE": 1}],
+			[500000, {"RED": 0, "GREEN": 0, "BLUE": 0}]
+		],
+		"repeat": true
+	},
 	"led_charging": {
 		"type": "RECIPROCAL_GRADIENT",
 		"stops": [
@@ -175,6 +183,25 @@
 	"led_idle": {
 		"stops": [
 			[0, {"RED": 0, "GREEN": 1, "BLUE": 0}]
+		]
+	},
+	"charge_profile": {
+		"current_offset": 1.4,
+		"charge_phases": [
+			{
+				"cc_cv": {
+					"current": 4.7,
+					"voltage": 56.4
+				},
+				"target_min_current": 0.4
+			},
+			{
+				"is_conservation": true,
+				"cc_cv": {
+					"current": 0.4,
+					"voltage": 55.2
+				}
+			}
 		]
 	}
 }
