@@ -227,8 +227,8 @@ void RelayBoardV3::handle(std::shared_ptr<const pilot::kinematics::differential:
 	out->name.resize(2);
 	out->position.resize(2);
 	out->velocity.resize(2);
-	out->name[0] = "wheel_front_left_joint";
-	out->name[1] = "wheel_front_right_joint";
+	out->name[0] = "wheel_left_joint";
+	out->name[1] = "wheel_right_joint";
 	out->position[0] = value->position.left;
 	out->position[1] = value->position.right;
 	out->velocity[0] = value->velocity.left;
@@ -523,9 +523,9 @@ void RelayBoardV3::handle_JointTrajectory(std::shared_ptr<const trajectory_msgs:
 		for(size_t i=0; i<std::min(trajectory->joint_names.size(), point.velocities.size()); i++){
 			const auto &name = trajectory->joint_names[i];
 			auto v = point.velocities[i];
-			if(name == "wheel_front_left_joint"){
+			if(name == "wheel_left_joint"){
 				out->velocity.left = v;
-			}else if(name == "wheel_front_right_joint"){
+			}else if(name == "wheel_right_joint"){
 				out->velocity.right = v;
 			}else{
 				throw std::logic_error("Unkwnown joint name: " + name);
