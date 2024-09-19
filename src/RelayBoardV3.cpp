@@ -76,6 +76,9 @@ void RelayBoardV3::main(){
 	if(board_init_interval_ms > 0){
 		set_timer_millis(board_init_interval_ms, std::bind(&RelayBoardV3::init_board, this));
 	}
+	if(update_interval_ms > 0){
+		set_timer_millis(update_interval_ms, std::bind(&RelayBoardV3::update, this));
+	}
 
 	Super::main();
 	rclcpp::shutdown();
@@ -100,6 +103,25 @@ void RelayBoardV3::handle(std::shared_ptr<const vnx::LogMsg> value){
 	default:
 		RCLCPP_INFO(logger, message.c_str());
 		break;
+	}
+}
+
+
+void RelayBoardV3::handle(std::shared_ptr<const pilot::Incident> value){
+	const auto key = value->event.get_key();
+	auto iter = incident_map.find(key);
+	if(iter != incident_map.end()) {
+		if(value->is_cleared) {
+			on_incident(value);
+			incident_map.erase(iter);
+		} else {
+			iter->second = value;
+		}
+	}else{
+		on_incident(value);
+		if(value->is_active){
+			incident_map[key] = value;
+		}
 	}
 }
 
@@ -449,6 +471,38 @@ void RelayBoardV3::init_board(){
 
 	module_launcher->launch(remote_config);
 	board_initialized = true;
+}
+
+void RelayBoardV3::update(){
+	const auto now = vnx::get_time_micros();
+
+	// check incident timeouts
+	for(auto iter = incident_map.begin(); iter != incident_map.end(); /* no iter */) {
+		auto value = iter->second;
+		if(value->timeout_ms > 0 && (now - value->time) / 1000 > value->timeout_ms) {
+			auto copy = vnx::clone(value);
+			copy->time = now;
+			copy->is_active = false;
+			copy->is_cleared = true;
+			on_incident(copy);
+			iter = incident_map.erase(iter);
+		} else {
+			iter++;
+		}
+	}
+}
+
+void RelayBoardV3::on_incident(std::shared_ptr<const pilot::Incident> value){
+	int level = WARN;
+	switch(value->event.type) {
+		case pilot::event_type_e::ERROR: level = ERROR; break;
+		case pilot::event_type_e::WARNING: level = WARN; break;
+		case pilot::event_type_e::NOTIFICATION: level = INFO; break;
+	}
+	if(value->is_cleared) {
+		level = INFO;
+	}
+	log(level) << value->to_log_message();
 }
 
 void RelayBoardV3::handle_KinematicsState(std::shared_ptr<const neo_msgs2::msg::KinematicsState> state, vnx::TopicPtr pilot_topic){
