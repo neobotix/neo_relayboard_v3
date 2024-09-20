@@ -12,6 +12,12 @@
 		304,
 		305
 	],
+	"voltage_calculation": [
+		[0, "ZERO"],
+		[1, "MAX"],
+		[2, "SUM"],
+		[4, "SUM"]
+	],
 	"current_calculation": [
 		[0, "ZERO"],
 		[1, "MAX"],
