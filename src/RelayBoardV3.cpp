@@ -21,6 +21,8 @@
 #include <neo_msgs2/msg/relay_board_v3.hpp>
 #include <neo_msgs2/msg/safety_state.hpp>
 #include <neo_msgs2/msg/kinematics_state.hpp>
+#include <neo_msgs2/msg/safety_mode.hpp>
+
 #include <std_msgs/msg/color_rgba.hpp>
 
 #include <cmath>
@@ -71,6 +73,7 @@ void RelayBoardV3::main(){
 	srv_stop_charging = nh->create_service<std_srvs::srv::Empty>("stop_charging", std::bind(&RelayBoardV3::service_stop_charging, this, std::placeholders::_1, std::placeholders::_2));
 	srv_shutdown_platform = nh->create_service<std_srvs::srv::Empty>("shutdown_platform", std::bind(&RelayBoardV3::service_shutdown_platform, this, std::placeholders::_1, std::placeholders::_2));
 	srv_set_safety_field = nh->create_service<neo_srvs2::srv::SetSafetyField>("set_safety_field", std::bind(&RelayBoardV3::service_set_safety_field, this, std::placeholders::_1, std::placeholders::_2));
+	srv_set_safety_mode  = nh->create_service<neo_srvs2::srv::RelayBoardSetSafetyMode>("set_safety_mode", std::bind(&RelayBoardV3::service_set_safety_mode, this, std::placeholders::_1, std::placeholders::_2));
 	srv_set_leds = nh->create_service<neo_srvs2::srv::RelayBoardSetLED>("set_leds", std::bind(&RelayBoardV3::service_set_leds, this, std::placeholders::_1, std::placeholders::_2));
 
 	if(board_init_interval_ms > 0){
@@ -636,6 +639,36 @@ bool RelayBoardV3::service_stop_charging(std::shared_ptr<std_srvs::srv::Empty::R
 bool RelayBoardV3::service_set_safety_field(std::shared_ptr<neo_srvs2::srv::SetSafetyField::Request> req, std::shared_ptr<neo_srvs2::srv::SetSafetyField::Response> res){
 	try{
 		safety_interface->select_safety_field(req->field_id);
+		res->success = true;
+		return true;
+	}catch(const std::exception &err){
+		log(WARN) << "Service call failed with: " << err.what();
+		res->success = false;
+		return false;
+	}
+}
+
+bool RelayBoardV3::service_set_safety_mode(
+	std::shared_ptr<neo_srvs2::srv::RelayBoardSetSafetyMode::Request> req,
+	std::shared_ptr<neo_srvs2::srv::RelayBoardSetSafetyMode::Response> res)
+{
+	pilot::safety_mode_e mode;
+
+	switch(req->set_safety_mode.mode) {
+		case neo_msgs2::msg::SafetyMode::SM_NONE:
+			mode = pilot::safety_mode_e::NONE;
+		case neo_msgs2::msg::SafetyMode::SM_APPROACHING:
+			mode = pilot::safety_mode_e::APPROACHING;
+		case neo_msgs2::msg::SafetyMode::SM_DEPARTING:
+			mode = pilot::safety_mode_e::DEPARTING;
+		case neo_msgs2::msg::SafetyMode::SM_WORKING:
+			mode = pilot::safety_mode_e::WORKING;
+		case neo_msgs2::msg::SafetyMode::SM_HANDLING:
+			mode = pilot::safety_mode_e::HANDLING;
+	}
+
+	try{
+		safety_interface->set_safety_mode(mode, req->station);
 		res->success = true;
 		return true;
 	}catch(const std::exception &err){
