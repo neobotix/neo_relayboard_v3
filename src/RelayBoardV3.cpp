@@ -652,19 +652,24 @@ bool RelayBoardV3::service_set_safety_mode(
 	std::shared_ptr<neo_srvs2::srv::RelayBoardSetSafetyMode::Request> req,
 	std::shared_ptr<neo_srvs2::srv::RelayBoardSetSafetyMode::Response> res)
 {
-	pilot::safety_mode_e mode;
+	pilot::safety_mode_e mode = pilot::safety_mode_e::NONE;
 
 	switch(req->set_safety_mode.mode) {
 		case neo_msgs2::msg::SafetyMode::SM_NONE:
 			mode = pilot::safety_mode_e::NONE;
+			break;
 		case neo_msgs2::msg::SafetyMode::SM_APPROACHING:
 			mode = pilot::safety_mode_e::APPROACHING;
+			break;
 		case neo_msgs2::msg::SafetyMode::SM_DEPARTING:
 			mode = pilot::safety_mode_e::DEPARTING;
+			break;
 		case neo_msgs2::msg::SafetyMode::SM_WORKING:
 			mode = pilot::safety_mode_e::WORKING;
+			break;
 		case neo_msgs2::msg::SafetyMode::SM_HANDLING:
 			mode = pilot::safety_mode_e::HANDLING;
+			break;
 	}
 
 	try{
