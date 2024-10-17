@@ -130,6 +130,13 @@ void RelayBoardV3::handle(std::shared_ptr<const pilot::Incident> value){
 
 
 void RelayBoardV3::handle(std::shared_ptr<const pilot::SystemState> value){
+	for(const auto &code : value->system_errors){
+		handle(Incident::create_ex(
+			value->time,
+			event_t::create_ex(event_type_e::ERROR, "SystemState", code.get_type_name(), code.to_string_value()),
+			0, {}, true, 3000)
+		);
+	}
 	if (value->is_shutdown && !is_shutdown) {
 		RCLCPP_INFO(nh->get_logger(),"-----------SHUTDOWN Signal from RelayBoardV3----------");
 		is_shutdown = true;
