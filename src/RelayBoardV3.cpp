@@ -284,65 +284,89 @@ void RelayBoardV3::handle(std::shared_ptr<const pilot::kinematics::omnidrive::Dr
 	const std::string dont_optimize_away_the_library = vnx::to_string(*value);
 	auto out = std::make_shared<sensor_msgs::msg::JointState>();
 	out->header.stamp = nh->now();
-	out->name.resize(8);
-	out->position.resize(8);
-	out->velocity.resize(8);
-	out->name[0] = "wheel_front_left_joint";
-	out->name[1] = "caster_front_left_joint";
-	out->name[2] = "wheel_back_left_joint";
-	out->name[3] = "caster_back_left_joint";
-	out->name[4] = "wheel_back_right_joint";
-	out->name[5] = "caster_back_right_joint";
-	out->name[6] = "wheel_front_right_joint";
-	out->name[7] = "caster_front_right_joint";
 
-	// Handling the drive wheel poses, if there are any
-	if(value->drive_pos.positions.count(pilot::kinematics::position_code_e::FRONT_LEFT)){
-		out->position[0] = value->drive_pos.get(pilot::kinematics::position_code_e::FRONT_LEFT);
-	}
-	if(value->drive_pos.positions.count(pilot::kinematics::position_code_e::BACK_LEFT)){
-		out->position[2] = value->drive_pos.get(pilot::kinematics::position_code_e::BACK_LEFT);
-	}
-	if(value->drive_pos.positions.count(pilot::kinematics::position_code_e::BACK_RIGHT)){
-		out->position[4] = value->drive_pos.get(pilot::kinematics::position_code_e::BACK_RIGHT);
-	}
-	if(value->drive_pos.positions.count(pilot::kinematics::position_code_e::FRONT_RIGHT)){
-		out->position[6] = value->drive_pos.get(pilot::kinematics::position_code_e::FRONT_RIGHT);
+	// Containers for detected joints
+	std::vector<std::string> joint_names;
+	std::vector<double> joint_positions;
+	std::vector<double> joint_velocities;
+	std::vector<double> joint_efforts;
+
+	// Define all possible module positions
+	std::vector<pilot::kinematics::position_code_e> possible_positions = {
+		pilot::kinematics::position_code_e::FRONT_LEFT,
+		pilot::kinematics::position_code_e::BACK_LEFT,
+		pilot::kinematics::position_code_e::BACK_RIGHT,
+		pilot::kinematics::position_code_e::FRONT_RIGHT
+	};
+
+	// Detect available drive modules
+	for (const auto& pos : possible_positions) {
+		// Using steering positions to determine availability of a module
+		if (value->steer_pos.positions.count(pos)) {
+			// Adding the drive wheel velocity
+			switch (pos) {
+				case pilot::kinematics::position_code_e::FRONT_LEFT:
+					joint_names.push_back("wheel_front_left_joint");
+					break;
+				case pilot::kinematics::position_code_e::BACK_LEFT:
+					joint_names.push_back("wheel_back_left_joint");
+					break;
+				case pilot::kinematics::position_code_e::BACK_RIGHT:
+					joint_names.push_back("wheel_back_right_joint");
+					break;
+				case pilot::kinematics::position_code_e::FRONT_RIGHT:
+					joint_names.push_back("wheel_front_right_joint");
+					break;
+			}
+			joint_positions.push_back(value->drive_pos.positions.count(pos) ? value->drive_pos.get(pos) : 0.0);
+			joint_velocities.push_back(value->drive_vel.get(pos));
+
+			// Adding the steering caster position
+			switch (pos) {
+				case pilot::kinematics::position_code_e::FRONT_LEFT:
+					joint_names.push_back("caster_front_left_joint");
+					break;
+				case pilot::kinematics::position_code_e::BACK_LEFT:
+					joint_names.push_back("caster_back_left_joint");
+					break;
+				case pilot::kinematics::position_code_e::BACK_RIGHT:
+					joint_names.push_back("caster_back_right_joint");
+					break;
+				case pilot::kinematics::position_code_e::FRONT_RIGHT:
+					joint_names.push_back("caster_front_right_joint");
+				break;
+			}
+			joint_positions.push_back(value->steer_pos.get(pos));
+			joint_velocities.push_back(value->steer_vel.velocities.count(pos) ? value->steer_vel.get(pos) : 0.0);
+		}
 	}
 
-	// Handling the caster velocities, if there are any
-	if(value->steer_vel.velocities.count(pilot::kinematics::position_code_e::FRONT_LEFT)){
-		out->velocity[1] = value->steer_vel.get(pilot::kinematics::position_code_e::FRONT_LEFT);
-	}
-	if(value->steer_vel.velocities.count(pilot::kinematics::position_code_e::BACK_LEFT)){
-		out->velocity[3] = value->steer_vel.get(pilot::kinematics::position_code_e::BACK_LEFT);
-	}
-	if(value->steer_vel.velocities.count(pilot::kinematics::position_code_e::BACK_RIGHT)){
-		out->velocity[5] = value->steer_vel.get(pilot::kinematics::position_code_e::BACK_RIGHT);
-	}
-	if(value->steer_vel.velocities.count(pilot::kinematics::position_code_e::FRONT_RIGHT)){
-		out->velocity[7] = value->steer_vel.get(pilot::kinematics::position_code_e::FRONT_RIGHT);
+	// Resize the ROS message arrays based on detected joints
+	size_t num_joints = joint_names.size();
+	out->name.resize(num_joints);
+	out->position.resize(num_joints);
+	out->velocity.resize(num_joints);
+
+	if (value->has_torque) {
+		out->effort.resize(num_joints);
 	}
 
-	out->position[1] = value->steer_pos.get(pilot::kinematics::position_code_e::FRONT_LEFT);
-	out->position[3] = value->steer_pos.get(pilot::kinematics::position_code_e::BACK_LEFT);
-	out->position[5] = value->steer_pos.get(pilot::kinematics::position_code_e::BACK_RIGHT);
-	out->position[7] = value->steer_pos.get(pilot::kinematics::position_code_e::FRONT_RIGHT);
-	out->velocity[0] = value->drive_vel.get(pilot::kinematics::position_code_e::FRONT_LEFT);
-	out->velocity[2] = value->drive_vel.get(pilot::kinematics::position_code_e::BACK_LEFT);
-	out->velocity[4] = value->drive_vel.get(pilot::kinematics::position_code_e::BACK_RIGHT);
-	out->velocity[6] = value->drive_vel.get(pilot::kinematics::position_code_e::FRONT_RIGHT);
-	if(value->has_torque) {
-		out->effort.resize(8);
-		out->effort[0] = value->drive_torque.get(pilot::kinematics::position_code_e::FRONT_LEFT);
-		out->effort[1] = value->steer_torque.get(pilot::kinematics::position_code_e::FRONT_LEFT);
-		out->effort[2] = value->drive_torque.get(pilot::kinematics::position_code_e::BACK_LEFT);
-		out->effort[3] = value->steer_torque.get(pilot::kinematics::position_code_e::BACK_LEFT);
-		out->effort[4] = value->drive_torque.get(pilot::kinematics::position_code_e::BACK_RIGHT);
-		out->effort[5] = value->steer_torque.get(pilot::kinematics::position_code_e::BACK_RIGHT);
-		out->effort[6] = value->drive_torque.get(pilot::kinematics::position_code_e::FRONT_RIGHT);
-		out->effort[7] = value->steer_torque.get(pilot::kinematics::position_code_e::FRONT_RIGHT);
+	// Fill the ROS message with detected values
+	for (size_t i = 0; i < num_joints; i++) {
+		out->name[i] = joint_names[i];
+		out->position[i] = joint_positions[i];
+		out->velocity[i] = joint_velocities[i];
+
+		if (value->has_torque) {
+			if (i % 2 == 0) {  // Drive wheel effort
+				out->effort[i] = value->drive_torque.get(possible_positions[i / 2]);
+			} else {  // Steering effort
+				out->effort[i] = value->steer_torque.get(possible_positions[i / 2]);
+			}
+		}
 	}
+
+	// Publish the dynamically built message
 	publish_to_ros(out, vnx_sample->topic, rclcpp::QoS(rclcpp::KeepLast(max_publish_queue_ros)));
 }
 
