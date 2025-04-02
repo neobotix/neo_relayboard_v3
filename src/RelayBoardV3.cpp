@@ -292,52 +292,34 @@ void RelayBoardV3::handle(std::shared_ptr<const pilot::kinematics::omnidrive::Dr
 	std::vector<double> joint_efforts;
 
 	// Define all possible module positions
-	std::vector<pilot::kinematics::position_code_e> possible_positions = {
-		pilot::kinematics::position_code_e::FRONT_LEFT,
-		pilot::kinematics::position_code_e::BACK_LEFT,
-		pilot::kinematics::position_code_e::BACK_RIGHT,
-		pilot::kinematics::position_code_e::FRONT_RIGHT
+	std::map<pilot::kinematics::position_code_e, std::string> joint_translation = {
+		{pilot::kinematics::position_code_e::FRONT_LEFT, "front_left_joint"},
+		{pilot::kinematics::position_code_e::BACK_LEFT, "back_left_joint"},
+		{pilot::kinematics::position_code_e::BACK_RIGHT, "back_right_joint"},
+		{pilot::kinematics::position_code_e::FRONT_RIGHT, "front_right_joint"}
 	};
 
 	// Detect available drive modules
-	for (const auto& pos : possible_positions) {
+	for (const auto& pos : joint_translation) {
 		// Using steering positions to determine availability of a module
-		if (value->steer_pos.positions.count(pos)) {
-			// Adding the drive wheel velocity
-			switch (pos) {
-				case pilot::kinematics::position_code_e::FRONT_LEFT:
-					joint_names.push_back("wheel_front_left_joint");
-					break;
-				case pilot::kinematics::position_code_e::BACK_LEFT:
-					joint_names.push_back("wheel_back_left_joint");
-					break;
-				case pilot::kinematics::position_code_e::BACK_RIGHT:
-					joint_names.push_back("wheel_back_right_joint");
-					break;
-				case pilot::kinematics::position_code_e::FRONT_RIGHT:
-					joint_names.push_back("wheel_front_right_joint");
-					break;
-			}
-			joint_positions.push_back(value->drive_pos.positions.count(pos) ? value->drive_pos.get(pos) : 0.0);
-			joint_velocities.push_back(value->drive_vel.get(pos));
+		if (value->steer_pos.positions.count(pos.first)) {
 
-			// Adding the steering caster position
-			switch (pos) {
-				case pilot::kinematics::position_code_e::FRONT_LEFT:
-					joint_names.push_back("caster_front_left_joint");
-					break;
-				case pilot::kinematics::position_code_e::BACK_LEFT:
-					joint_names.push_back("caster_back_left_joint");
-					break;
-				case pilot::kinematics::position_code_e::BACK_RIGHT:
-					joint_names.push_back("caster_back_right_joint");
-					break;
-				case pilot::kinematics::position_code_e::FRONT_RIGHT:
-					joint_names.push_back("caster_front_right_joint");
-				break;
+			// Populating the joint_names
+			const auto &suffix = pos.second;
+			joint_names.push_back("wheel_" + suffix);
+			joint_names.push_back("caster_" + suffix);
+
+			// Populating the joint_positions and velocities
+			joint_positions.push_back(value->drive_pos.positions.count(pos.first) ? value->drive_pos.get(pos.first) : 0.0);
+			joint_velocities.push_back(value->drive_vel.get(pos.first));
+
+			joint_positions.push_back(value->steer_pos.get(pos.first));
+			joint_velocities.push_back(value->steer_vel.velocities.count(pos.first) ? value->steer_vel.get(pos.first) : 0.0);
+
+			if (value->has_torque) {
+				joint_efforts.push_back(value->drive_torque.get(pos.first));	
+				joint_efforts.push_back(value->steer_torque.get(pos.first));	
 			}
-			joint_positions.push_back(value->steer_pos.get(pos));
-			joint_velocities.push_back(value->steer_vel.velocities.count(pos) ? value->steer_vel.get(pos) : 0.0);
 		}
 	}
 
@@ -356,13 +338,8 @@ void RelayBoardV3::handle(std::shared_ptr<const pilot::kinematics::omnidrive::Dr
 		out->name[i] = joint_names[i];
 		out->position[i] = joint_positions[i];
 		out->velocity[i] = joint_velocities[i];
-
 		if (value->has_torque) {
-			if (i % 2 == 0) {  // Drive wheel effort
-				out->effort[i] = value->drive_torque.get(possible_positions[i / 2]);
-			} else {  // Steering effort
-				out->effort[i] = value->steer_torque.get(possible_positions[i / 2]);
-			}
+			out->effort[i] = joint_efforts[i];
 		}
 	}
 
