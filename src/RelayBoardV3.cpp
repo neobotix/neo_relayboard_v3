@@ -296,7 +296,9 @@ void RelayBoardV3::handle(std::shared_ptr<const pilot::kinematics::omnidrive::Dr
 		{pilot::kinematics::position_code_e::FRONT_LEFT, "front_left_joint"},
 		{pilot::kinematics::position_code_e::BACK_LEFT, "back_left_joint"},
 		{pilot::kinematics::position_code_e::BACK_RIGHT, "back_right_joint"},
-		{pilot::kinematics::position_code_e::FRONT_RIGHT, "front_right_joint"}
+		{pilot::kinematics::position_code_e::FRONT_RIGHT, "front_right_joint"},
+		{pilot::kinematics::position_code_e::FRONT, "front_joint"},
+		{pilot::kinematics::position_code_e::BACK, "back_joint"}
 	};
 
 	// Detect available drive modules
