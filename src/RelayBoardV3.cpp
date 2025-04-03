@@ -589,6 +589,10 @@ void RelayBoardV3::handle_JointTrajectory(std::shared_ptr<const trajectory_msgs:
 				out->steer_pos.set(pilot::kinematics::position_code_e::BACK_LEFT, p);
 			}else if(name == "caster_back_right_joint"){
 				out->steer_pos.set(pilot::kinematics::position_code_e::BACK_RIGHT, p);
+			}else if(name == "caster_back_joint"){
+				out->steer_pos.set(pilot::kinematics::position_code_e::BACK, p);
+			}else if(name == "caster_front_joint"){
+				out->steer_pos.set(pilot::kinematics::position_code_e::FRONT, p);
 			}else{
 				throw std::logic_error("Unknown joint name: " + name);
 			}
