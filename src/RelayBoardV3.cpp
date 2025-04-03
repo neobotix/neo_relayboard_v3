@@ -577,6 +577,10 @@ void RelayBoardV3::handle_JointTrajectory(std::shared_ptr<const trajectory_msgs:
 				out->drive_vel.set(pilot::kinematics::position_code_e::BACK_LEFT, v);
 			}else if(name == "wheel_back_right_joint"){
 				out->drive_vel.set(pilot::kinematics::position_code_e::BACK_RIGHT, v);
+			}else if(name == "wheel_front_joint"){
+				out->drive_vel.set(pilot::kinematics::position_code_e::FRONT, v);
+			}else if(name == "wheel_back_joint"){
+				out->drive_vel.set(pilot::kinematics::position_code_e::BACK, v);
 			}else if(name == "caster_front_left_joint"){
 				out->steer_pos.set(pilot::kinematics::position_code_e::FRONT_LEFT, p);
 			}else if(name == "caster_front_right_joint"){
