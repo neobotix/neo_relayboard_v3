@@ -137,6 +137,7 @@ void RelayBoardV3::handle(std::shared_ptr<const pilot::SystemState> value){
 			event_t::create_ex(event_type_e::ERROR, "SystemState", code.get_type_name(), code.to_string_value()),
 			0, {}, true, 3000)
 		);
+
 		if (value->system_errors.size() > 1) {
 			system_error += code.to_string_value() + ",";	
 		} else {
@@ -144,7 +145,12 @@ void RelayBoardV3::handle(std::shared_ptr<const pilot::SystemState> value){
 		}
 	}
 
-	m_system_error = (system_error != "") ? system_error : "Normal";
+	if (system_error != "") {
+		m_system_error = system_error;
+		RCLCPP_ERROR(nh->get_logger(), "System error reported: %s", m_system_error.c_str());
+	} else {
+		m_system_error = "None";
+	}
 
 	if (value->is_shutdown && !is_shutdown) {
 		RCLCPP_INFO(nh->get_logger(),"-----------SHUTDOWN Signal from RelayBoardV3----------");
