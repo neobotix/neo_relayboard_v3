@@ -66,6 +66,7 @@ private:
 	bool board_initialized = false;
 	std::map<std::tuple<std::string, std::string, std::string>, std::shared_ptr<const pilot::Incident>> incident_map;
 	std::shared_ptr<const pilot::PowerState> m_power_state;
+	std::vector<std::string> m_system_error;
 
 	template<class T>
 	void bulk_subscribe(std::function<void(std::shared_ptr<const T>, vnx::TopicPtr)> func, const std::map<std::string, vnx::TopicPtr> &mapping, const rclcpp::QoS &qos);
