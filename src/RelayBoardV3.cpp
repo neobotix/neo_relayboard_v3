@@ -130,10 +130,8 @@ void RelayBoardV3::handle(std::shared_ptr<const pilot::Incident> value){
 
 
 void RelayBoardV3::handle(std::shared_ptr<const pilot::SystemState> value){
-	if (value->system_errors.size() > 0) {
-		m_system_error.clear();
-		m_system_error.resize(value->system_errors.size());	
-	}
+	m_system_error.clear();
+	m_system_error.resize(value->system_errors.size());	
 
 	for(const auto &code : value->system_errors){
 		handle(Incident::create_ex(
