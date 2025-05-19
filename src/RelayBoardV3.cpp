@@ -130,13 +130,18 @@ void RelayBoardV3::handle(std::shared_ptr<const pilot::Incident> value){
 
 
 void RelayBoardV3::handle(std::shared_ptr<const pilot::SystemState> value){
+	m_system_error.clear();
+
 	for(const auto &code : value->system_errors){
 		handle(Incident::create_ex(
 			value->time,
 			event_t::create_ex(event_type_e::ERROR, "SystemState", code.get_type_name(), code.to_string_value()),
 			0, {}, true, 3000)
 		);
+
+		m_system_error.push_back(code.to_string_value());	
 	}
+
 	if (value->is_shutdown && !is_shutdown) {
 		RCLCPP_INFO(nh->get_logger(),"-----------SHUTDOWN Signal from RelayBoardV3----------");
 		is_shutdown = true;
@@ -388,6 +393,8 @@ void RelayBoardV3::handle(std::shared_ptr<const pilot::RelayBoardV3Data> value){
 			out->led_state.b = pair.second;
 		}
 	}
+
+	out->system_error = m_system_error;
 
 	publish_to_ros(out, vnx_sample->topic, rclcpp::QoS(rclcpp::KeepLast(max_publish_queue_ros)));
 }
