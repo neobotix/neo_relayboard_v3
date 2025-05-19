@@ -44,6 +44,8 @@ RelayBoardV3::RelayBoardV3(const std::string &_vnx_name, std::shared_ptr<rclcpp:
 	RelayBoardV3Base(_vnx_name)
 {
 	nh = node_handle;
+	m_system_error.resize(1);
+	m_system_error.push_back("None");
 }
 
 void RelayBoardV3::main(){
@@ -130,7 +132,11 @@ void RelayBoardV3::handle(std::shared_ptr<const pilot::Incident> value){
 
 
 void RelayBoardV3::handle(std::shared_ptr<const pilot::SystemState> value){
-	std::string system_error = "";
+	if (value->system_errors.size() > 0) {
+		m_system_error.clear();
+		m_system_error.resize(value->system_errors.size());	
+	}
+
 	for(const auto &code : value->system_errors){
 		handle(Incident::create_ex(
 			value->time,
@@ -138,18 +144,7 @@ void RelayBoardV3::handle(std::shared_ptr<const pilot::SystemState> value){
 			0, {}, true, 3000)
 		);
 
-		if (value->system_errors.size() > 1) {
-			system_error += code.to_string_value() + ",";	
-		} else {
-			system_error = code.to_string_value();
-		}
-	}
-
-	if (system_error != "") {
-		m_system_error = system_error;
-		RCLCPP_ERROR(nh->get_logger(), "System error reported: %s", m_system_error.c_str());
-	} else {
-		m_system_error = "None";
+		m_system_error.push_back(code.to_string_value());	
 	}
 
 	if (value->is_shutdown && !is_shutdown) {
