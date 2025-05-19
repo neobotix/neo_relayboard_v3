@@ -44,8 +44,6 @@ RelayBoardV3::RelayBoardV3(const std::string &_vnx_name, std::shared_ptr<rclcpp:
 	RelayBoardV3Base(_vnx_name)
 {
 	nh = node_handle;
-	m_system_error.resize(1);
-	m_system_error.push_back("None");
 }
 
 void RelayBoardV3::main(){
