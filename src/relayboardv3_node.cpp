@@ -30,7 +30,7 @@ int main(int argc, char **argv){
 	std::string pilot_config;
 	std::string agm_batteries_config;
 	std::string lfp_batteries_config;
-	std::string use_multipowr_config;
+	std::string multipowr_config;
 	bool lfp_batteries = false;
 	bool use_multipowr = false;
 
@@ -38,7 +38,7 @@ int main(int argc, char **argv){
 	nh->get_parameter<std::string>("pilot_config", pilot_config);
 	nh->get_parameter<bool>("lfp_batteries", lfp_batteries);
 	nh->get_parameter<bool>("use_multipowr", use_multipowr);
-	nh->get_parameter<std::string>("use_multipowr_config", use_multipowr_config);
+	nh->get_parameter<std::string>("multipowr_config", multipowr_config);
 	nh->get_parameter<std::string>("agm_batteries_config", agm_batteries_config);
 	nh->get_parameter<std::string>("lfp_batteries_config", lfp_batteries_config);
 
@@ -53,7 +53,7 @@ int main(int argc, char **argv){
 
 	// Read smart charger configs if available
 	if (use_multipowr) {
-		vnx::read_config_tree(use_multipowr_config);
+		vnx::read_config_tree(multipowr_config);
 	}
 
 	{
