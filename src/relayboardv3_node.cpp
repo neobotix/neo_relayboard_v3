@@ -20,13 +20,41 @@ int main(int argc, char **argv){
 	std::shared_ptr<rclcpp::Node> nh = std::make_shared<rclcpp::Node>(process_name);
 	nh->declare_parameter<std::string>("board_node", "192.168.1.80:5554");
 	nh->declare_parameter<std::string>("pilot_config", "config/default/generic/");
+	nh->declare_parameter<bool>("lfp_batteries", false);
+	nh->declare_parameter<bool>("use_multipowr", false);
+	nh->declare_parameter<std::string>("use_multipowr_config", "config/addons/smart-charger/");
+	nh->declare_parameter<std::string>("agm_batteries_config", "config/addons/agm-batteries/");
+	nh->declare_parameter<std::string>("lfp_batteries_config", "config/addons/lfp-batteries/");
 
 	std::string board_node;
 	std::string pilot_config;
+	std::string agm_batteries_config;
+	std::string lfp_batteries_config;
+	std::string multipowr_config;
+	bool lfp_batteries = false;
+	bool use_multipowr = false;
+
 	nh->get_parameter<std::string>("board_node", board_node);
 	nh->get_parameter<std::string>("pilot_config", pilot_config);
+	nh->get_parameter<bool>("lfp_batteries", lfp_batteries);
+	nh->get_parameter<bool>("use_multipowr", use_multipowr);
+	nh->get_parameter<std::string>("multipowr_config", multipowr_config);
+	nh->get_parameter<std::string>("agm_batteries_config", agm_batteries_config);
+	nh->get_parameter<std::string>("lfp_batteries_config", lfp_batteries_config);
 
 	vnx::read_config_tree(pilot_config);
+
+	// Read LFP battery configs if available
+	if (lfp_batteries) {
+		vnx::read_config_tree(lfp_batteries_config);
+	} else {
+		vnx::read_config_tree(agm_batteries_config);
+	}
+
+	// Read smart charger configs if available
+	if (use_multipowr) {
+		vnx::read_config_tree(multipowr_config);
+	}
 
 	{
 		// disable vnx log, since the messages will be printed by ROS
