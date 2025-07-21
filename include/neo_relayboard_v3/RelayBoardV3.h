@@ -67,6 +67,15 @@ private:
     std::shared_ptr<const pilot::PowerState> m_power_state;
     std::vector<std::string> m_system_error;
 
+    ros::ServiceServer srv_set_relay;
+    ros::ServiceServer srv_set_digital_output;
+    ros::ServiceServer srv_start_charging;
+    ros::ServiceServer srv_stop_charging;
+    ros::ServiceServer srv_shutdown_platform;
+    ros::ServiceServer srv_set_safety_field;
+    ros::ServiceServer srv_set_safety_mode;
+    ros::ServiceServer srv_set_leds;
+
     template<class T>
     void bulk_subscribe(std::function<void(std::shared_ptr<const T>, vnx::TopicPtr)> func, const std::map<std::string, vnx::TopicPtr> &mapping, int queue_size);
     template<class T>
