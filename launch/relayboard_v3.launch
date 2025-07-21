@@ -1,8 +1,9 @@
 <?xml version="1.0"?>
 <launch>
-	<!-- start node -->
-	<node pkg="neo_relayboard_v3" exec="relayboardv3_node" name="relayboardv3_node">
-		<param name="pilot_config" value="/home/neobotix/ros2_workspace/src/neo_relayboard_v3/config/default/rox-argo/"/>
-	</node>
+	<!-- Load parameters from relayboard_v3.yaml -->
+	<rosparam command="load" file="/home/ros_workspace/src/neo_relayboard_v3/config/sample.yaml" />
+
+	<!-- Start relayboardv3_node -->
+	<node pkg="neo_relayboard_v3" type="relayboardv3_node" name="neo_relayboard_v3_node" output="screen" />
 
 </launch>
