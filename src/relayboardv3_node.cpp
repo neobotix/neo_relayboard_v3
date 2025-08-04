@@ -22,7 +22,7 @@ int main(int argc, char **argv){
 	nh->declare_parameter<std::string>("pilot_config", "config/default/generic/");
 	nh->declare_parameter<bool>("lfp_batteries", false);
 	nh->declare_parameter<bool>("use_multipowr", false);
-	nh->declare_parameter<std::string>("use_multipowr_config", "config/addons/smart-charger/");
+	nh->declare_parameter<std::string>("multipowr_config", "config/addons/smart-charger/");
 	nh->declare_parameter<std::string>("agm_batteries_config", "config/addons/agm-batteries/");
 	nh->declare_parameter<std::string>("lfp_batteries_config", "config/addons/lfp-batteries/");
 
