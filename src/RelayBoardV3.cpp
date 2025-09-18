@@ -60,17 +60,19 @@ void RelayBoardV3::main(){
 		for (const auto& topic : ros_topic) {
 			const auto& ros_topic = topic.first;
 			const auto& pilot_topic = topic.second;
+			ros::Subscriber subs;
 			if (ros_type == "trajectory_msgs/JointTrajectory") {
-				nh->subscribe<trajectory_msgs::JointTrajectory>(
+				subs = nh->subscribe<trajectory_msgs::JointTrajectory>(
 					ros_topic, 10,
 					std::bind(&RelayBoardV3::handle_JointTrajectory, this, std::placeholders::_1, pilot_topic));
 			} else if (ros_type == "neo_msgs/KinematicsState") {
-				nh->subscribe<neo_msgs::KinematicsState>(
+				subs = nh->subscribe<neo_msgs::KinematicsState>(
 					ros_topic, 10,
 					std::bind(&RelayBoardV3::handle_KinematicsState, this,  std::placeholders::_1, pilot_topic));
 			} else {
 				log(WARN) << "Unsupported ROS type: " << ros_type;
 			}
+			import_subscribers[ros_topic] = subs;
 		}
 	}
 
