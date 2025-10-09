@@ -71,7 +71,11 @@ target_link_libraries(relayboardv3_node
 
 add_subdirectory(pilot-public)
 
-install(TARGETS relayboardv3 DESTINATION lib/${PROJECT_NAME})
+install(TARGETS relayboardv3
+    EXPORT export_relayboardv3
+    ARCHIVE DESTINATION lib
+    LIBRARY DESTINATION lib
+    RUNTIME DESTINATION ${PROJECT_NAME})
 install(TARGETS relayboardv3_node DESTINATION lib/${PROJECT_NAME})
 install(DIRECTORY launch config DESTINATION share/${PROJECT_NAME})
 
