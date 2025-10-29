@@ -197,6 +197,7 @@ void RelayBoardV3::handle(std::shared_ptr<const pilot::BatteryState> value){
 	out->header.stamp = pilot_to_ros_time(value->time);
 
 	out->voltage = value->voltage;
+	out->temperature = value->temperature;
 	out->current = NAN;
 	if(m_power_state && m_power_state->is_charging){
 		out->current = m_power_state->charging_current;
@@ -204,8 +205,17 @@ void RelayBoardV3::handle(std::shared_ptr<const pilot::BatteryState> value){
 		out->current = *value->current;
 	}
 	out->charge = NAN;
+	if(value->charge){
+		out->charge = (*value->charge) / 3600.0;
+	}
 	out->capacity = NAN;
+	if(value->capacity){
+		out->capacity = (*value->capacity) / 3600.0;
+	}
 	out->design_capacity = NAN;
+	if(value->design_capacity){
+		out->design_capacity = (*value->design_capacity) / 3600.0;
+	}
 	out->percentage = value->remaining;
 	out->power_supply_status = sensor_msgs::msg::BatteryState::POWER_SUPPLY_STATUS_UNKNOWN;
 	if(m_power_state){
@@ -226,6 +236,7 @@ void RelayBoardV3::handle(std::shared_ptr<const pilot::BatteryState> value){
 		out->power_supply_technology = sensor_msgs::msg::BatteryState::POWER_SUPPLY_TECHNOLOGY_LIFE;
 	}
 	out->present = true;
+	out->serial_number = value->serial_number;
 
 	publish_to_ros(out, vnx_sample->topic, rclcpp::QoS(rclcpp::KeepLast(max_publish_queue_ros)));
 }
