@@ -280,10 +280,10 @@ void RelayBoardV3::handle(std::shared_ptr<const pilot::kinematics::mecanum::Driv
 	out->name.resize(4);
 	out->position.resize(4);
 	out->velocity.resize(4);
-	out->name[0] = "wheel_front_left_base_link";
-	out->name[1] = "wheel_front_right_base_link";
-	out->name[2] = "wheel_back_left_base_link";
-	out->name[3] = "wheel_back_right_base_link";
+	out->name[0] = "wheel_front_left_joint";
+	out->name[1] = "wheel_front_right_joint";
+	out->name[2] = "wheel_back_left_joint";
+	out->name[3] = "wheel_back_right_joint";
 	out->position[0] = value->position.front_left;
 	out->position[1] = value->position.front_right;
 	out->position[2] = value->position.back_left;
@@ -574,13 +574,13 @@ void RelayBoardV3::handle_JointTrajectory(std::shared_ptr<const trajectory_msgs:
 		for(size_t i=0; i<std::min(trajectory->joint_names.size(), point.velocities.size()); i++){
 			const auto &name = trajectory->joint_names[i];
 			auto v = point.velocities[i];
-			if(name == "wheel_front_left_base_link"){
+			if(name == "wheel_front_left_joint"){
 				out->velocity.front_left = v;
-			}else if(name == "wheel_front_right_base_link"){
+			}else if(name == "wheel_front_right_joint"){
 				out->velocity.front_right = v;
-			}else if(name == "wheel_back_left_base_link"){
+			}else if(name == "wheel_back_left_joint"){
 				out->velocity.back_left = v;
-			}else if(name == "wheel_back_right_base_link"){
+			}else if(name == "wheel_back_right_joint"){
 				out->velocity.back_right = v;
 			}else{
 				throw std::logic_error("Unkwnown joint name: " + name);
