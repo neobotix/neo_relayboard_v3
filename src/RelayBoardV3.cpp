@@ -381,15 +381,15 @@ void RelayBoardV3::handle(std::shared_ptr<const pilot::RelayBoardV3Data> value){
 	out->uptime = value->uptime;
 	out->ambient_temperature = value->ambient_temperature;
 
-	for(int i = 0; i < value->relay_states.size(); ++i) {
+	for(size_t i = 0; i < value->relay_states.size(); ++i) {
 		out->relay_states[i] = value->relay_states[i];
 	}
 
-	for(int i = 0; i < value->relay_states.size(); ++i) {
+	for(size_t i = 0; i < value->digital_input_states.size(); ++i) {
 		out->digital_input_states[i] = value->digital_input_states[i];
 	}
 
-	for(int i = 0; i < value->relay_states.size(); ++i) {
+	for(size_t i = 0; i < value->keypad_button_states.size(); ++i) {
 		out->keypad_button_states[i] = value->keypad_button_states[i];
 	}
 
