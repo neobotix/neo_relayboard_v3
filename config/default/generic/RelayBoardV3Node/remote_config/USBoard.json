@@ -1,0 +1,7 @@
+{
+	"input_can": "devices.can.receive",
+	"topic_can_request": "devices.can.send",
+	"output_data": "platform.us_board_data",
+	"output_config": "platform.us_board_config"
+}
+
