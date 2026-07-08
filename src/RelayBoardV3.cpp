@@ -195,10 +195,10 @@ void RelayBoardV3::handle(std::shared_ptr<const pilot::BatteryState> value){
 	out->voltage = value->voltage;
 	out->temperature = value->temperature;
 	out->current = NAN;
-	if(m_power_state && m_power_state->is_charging){
-		out->current = m_power_state->charging_current;
-	}else if(value->current){
+	if(value->current){
 		out->current = *value->current;
+	}else if(m_power_state && m_power_state->is_charging){
+		out->current = m_power_state->charging_current;
 	}
 	out->charge = NAN;
 	if(value->charge){
