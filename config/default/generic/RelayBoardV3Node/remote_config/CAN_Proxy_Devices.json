@@ -6,5 +6,9 @@
 		"receive_error_frames": true
 	},
 	"device": "can0",
-	"is_big_endian": false
+	"is_big_endian": false,
+	"socket_options": {
+		"filter_list": [1],
+		"is_block_list": true
+	}
 }
