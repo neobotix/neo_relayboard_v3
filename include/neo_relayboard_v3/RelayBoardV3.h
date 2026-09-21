@@ -11,17 +11,19 @@
 #include <neo_relayboard_v3/RelayBoardV3Base.hxx>
 #include <pilot/PlatformInterfaceClient.hxx>
 #include <pilot/SafetyInterfaceClient.hxx>
+#include <pilot/SafetyInterfaceAsyncClient.hxx>
 #include <pilot/ModuleLauncherClient.hxx>
 
 #include <rclcpp/rclcpp.hpp>
+#include <rclcpp_action/rclcpp_action.hpp>
 #include <trajectory_msgs/msg/joint_trajectory.hpp>
 #include <std_srvs/srv/empty.hpp>
 #include <neo_srvs2/srv/relay_board_set_relay.hpp>
 #include <neo_srvs2/srv/io_board_set_dig_out.hpp>
 #include <neo_srvs2/srv/relay_board_set_lcd_msg.hpp>
-#include <neo_srvs2/srv/relay_board_set_safety_mode.hpp>
 #include <neo_srvs2/srv/set_safety_field.hpp>
 #include <neo_srvs2/srv/relay_board_set_led.hpp>
+#include <neo_actions2/action/relay_board_set_safety_mode.hpp>
 #include <neo_msgs2/msg/relay_board_v3.hpp>
 #include <neo_msgs2/msg/safety_state.hpp>
 #include <neo_msgs2/msg/kinematics_state.hpp>
@@ -61,6 +63,7 @@ private:
 
 	std::shared_ptr<pilot::PlatformInterfaceClient> platform_interface;
 	std::shared_ptr<pilot::SafetyInterfaceClient> safety_interface;
+	std::shared_ptr<pilot::SafetyInterfaceAsyncClient> safety_interface_async;
 	std::shared_ptr<pilot::ModuleLauncherClient> module_launcher;
 
 	bool board_initialized = false;
@@ -86,7 +89,7 @@ private:
 	rclcpp::Service<std_srvs::srv::Empty>::SharedPtr srv_shutdown_platform;
 	rclcpp::Service<neo_srvs2::srv::SetSafetyField>::SharedPtr srv_set_safety_field;
 	rclcpp::Service<neo_srvs2::srv::RelayBoardSetLED>::SharedPtr srv_set_leds;
-	rclcpp::Service<neo_srvs2::srv::RelayBoardSetSafetyMode>::SharedPtr srv_set_safety_mode;
+	rclcpp_action::Server<neo_actions2::action::RelayBoardSetSafetyMode>::SharedPtr action_set_safety_mode;
 
 	bool is_shutdown = false;
 
@@ -96,8 +99,10 @@ private:
 	bool service_stop_charging(std::shared_ptr<std_srvs::srv::Empty::Request> req, std::shared_ptr<std_srvs::srv::Empty::Response> res);
 	bool service_shutdown_platform(std::shared_ptr<std_srvs::srv::Empty::Request> req, std::shared_ptr<std_srvs::srv::Empty::Response> res);
 	bool service_set_safety_field(std::shared_ptr<neo_srvs2::srv::SetSafetyField::Request> req, std::shared_ptr<neo_srvs2::srv::SetSafetyField::Response> res);
-	bool service_set_safety_mode(std::shared_ptr<neo_srvs2::srv::RelayBoardSetSafetyMode::Request> req, std::shared_ptr<neo_srvs2::srv::RelayBoardSetSafetyMode::Response> res);
 	bool service_set_leds(std::shared_ptr<neo_srvs2::srv::RelayBoardSetLED::Request> req, std::shared_ptr<neo_srvs2::srv::RelayBoardSetLED::Response> res);
+	rclcpp_action::GoalResponse action_set_safety_mode_goal(const rclcpp_action::GoalUUID &uuid, std::shared_ptr<const neo_actions2::action::RelayBoardSetSafetyMode::Goal> goal);
+	rclcpp_action::CancelResponse action_set_safety_mode_cancel(const std::shared_ptr<rclcpp_action::ServerGoalHandle<neo_actions2::action::RelayBoardSetSafetyMode>> goal_handle);
+	void action_set_safety_mode_accepted(const std::shared_ptr<rclcpp_action::ServerGoalHandle<neo_actions2::action::RelayBoardSetSafetyMode>> goal_handle);
 };
 
 

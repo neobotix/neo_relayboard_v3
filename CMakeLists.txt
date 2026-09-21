@@ -11,19 +11,23 @@ endif()
 
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(rclcpp_action REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(trajectory_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(neo_msgs2 REQUIRED)
 find_package(neo_srvs2 REQUIRED)
+find_package(neo_actions2 REQUIRED)
 
 set(dependencies
 	rclcpp
+	rclcpp_action
 	std_srvs
 	trajectory_msgs
 	sensor_msgs
 	neo_msgs2
 	neo_srvs2
+	neo_actions2
 )
 
 ament_export_include_directories(
