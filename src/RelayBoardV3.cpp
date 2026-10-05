@@ -65,6 +65,8 @@ void RelayBoardV3::main(){
 	}
 	platform_interface = std::make_shared<PlatformInterfaceClient>(platform_interface_server);
 	safety_interface = std::make_shared<SafetyInterfaceClient>(safety_server);
+	safety_interface_async = std::make_shared<SafetyInterfaceAsyncClient>(safety_server);
+	add_async_client(safety_interface_async);
 	module_launcher = std::make_shared<ModuleLauncherClient>(launcher_server);
 
 	srv_set_relay = nh->create_service<neo_srvs2::srv::RelayBoardSetRelay>("set_relay", std::bind(&RelayBoardV3::service_set_relay, this, std::placeholders::_1, std::placeholders::_2));
@@ -73,8 +75,14 @@ void RelayBoardV3::main(){
 	srv_stop_charging = nh->create_service<std_srvs::srv::Empty>("stop_charging", std::bind(&RelayBoardV3::service_stop_charging, this, std::placeholders::_1, std::placeholders::_2));
 	srv_shutdown_platform = nh->create_service<std_srvs::srv::Empty>("shutdown_platform", std::bind(&RelayBoardV3::service_shutdown_platform, this, std::placeholders::_1, std::placeholders::_2));
 	srv_set_safety_field = nh->create_service<neo_srvs2::srv::SetSafetyField>("set_safety_field", std::bind(&RelayBoardV3::service_set_safety_field, this, std::placeholders::_1, std::placeholders::_2));
-	srv_set_safety_mode  = nh->create_service<neo_srvs2::srv::RelayBoardSetSafetyMode>("set_safety_mode", std::bind(&RelayBoardV3::service_set_safety_mode, this, std::placeholders::_1, std::placeholders::_2));
 	srv_set_leds = nh->create_service<neo_srvs2::srv::RelayBoardSetLED>("set_leds", std::bind(&RelayBoardV3::service_set_leds, this, std::placeholders::_1, std::placeholders::_2));
+	action_set_safety_mode = rclcpp_action::create_server<neo_actions2::action::RelayBoardSetSafetyMode>(
+		nh,
+		"set_safety_mode",
+		std::bind(&RelayBoardV3::action_set_safety_mode_goal, this, std::placeholders::_1, std::placeholders::_2),
+		std::bind(&RelayBoardV3::action_set_safety_mode_cancel, this, std::placeholders::_1),
+		std::bind(&RelayBoardV3::action_set_safety_mode_accepted, this, std::placeholders::_1)
+	);
 
 	if(board_init_interval_ms > 0){
 		set_timer_millis(board_init_interval_ms, std::bind(&RelayBoardV3::init_board, this));
@@ -685,13 +693,19 @@ bool RelayBoardV3::service_set_safety_field(std::shared_ptr<neo_srvs2::srv::SetS
 	}
 }
 
-bool RelayBoardV3::service_set_safety_mode(
-	std::shared_ptr<neo_srvs2::srv::RelayBoardSetSafetyMode::Request> req,
-	std::shared_ptr<neo_srvs2::srv::RelayBoardSetSafetyMode::Response> res)
-{
+rclcpp_action::GoalResponse RelayBoardV3::action_set_safety_mode_goal(const rclcpp_action::GoalUUID &/*uuid*/, std::shared_ptr<const neo_actions2::action::RelayBoardSetSafetyMode::Goal> /*goal*/){
+	return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;
+}
+
+rclcpp_action::CancelResponse RelayBoardV3::action_set_safety_mode_cancel(const std::shared_ptr<rclcpp_action::ServerGoalHandle<neo_actions2::action::RelayBoardSetSafetyMode>> /*goal_handle*/){
+	return rclcpp_action::CancelResponse::REJECT;
+}
+
+void RelayBoardV3::action_set_safety_mode_accepted(const std::shared_ptr<rclcpp_action::ServerGoalHandle<neo_actions2::action::RelayBoardSetSafetyMode>> goal_handle){
+	const auto goal = goal_handle->get_goal();
 	pilot::safety_mode_e mode = pilot::safety_mode_e::NONE;
 
-	switch(req->set_safety_mode.mode) {
+	switch(goal->set_safety_mode.mode) {
 		case neo_msgs2::msg::SafetyMode::SM_NONE:
 			mode = pilot::safety_mode_e::NONE;
 			break;
@@ -709,15 +723,19 @@ bool RelayBoardV3::service_set_safety_mode(
 			break;
 	}
 
-	try{
-		safety_interface->set_safety_mode(mode, req->station);
-		res->success = true;
-		return true;
-	}catch(const std::exception &err){
-		log(WARN) << "Service call failed with: " << err.what();
-		res->success = false;
-		return false;
-	}
+	auto on_success = [goal_handle]() {
+		auto result = std::make_shared<neo_actions2::action::RelayBoardSetSafetyMode::Result>();
+		result->success = true;
+		goal_handle->succeed(result);
+	};
+
+	auto on_failure = [goal_handle](const std::exception &/*err*/) {
+		auto result = std::make_shared<neo_actions2::action::RelayBoardSetSafetyMode::Result>();
+		result->success = false;
+		goal_handle->abort(result);
+	};
+
+	safety_interface_async->set_safety_mode(mode, goal->station, on_success, on_failure);
 }
 
 bool RelayBoardV3::service_shutdown_platform(std::shared_ptr<std_srvs::srv::Empty::Request> req, std::shared_ptr<std_srvs::srv::Empty::Response> res){
