@@ -184,6 +184,7 @@ void RelayBoardV3::handle(std::shared_ptr<const pilot::EmergencyState> value){
 	out->emergency_button_stop = value->has_code(safety_code_e::EMERGENCY_STOP);
 	out->scanner_stop = value->has_code(safety_code_e::SCANNER_STOP);
 	out->remote_emergency_stop = value->has_code(safety_code_e::RADIO_EMERGENCY_STOP);
+	out->arm_emergency_stop = value->has_code(safety_code_e::ARM_EMERGENCY_STOP);
 
 	if(value->state == em_stop_state_e::STOPPED){
 		out->emergency_state = neo_msgs2::msg::EmergencyStopState::EMSTOP;
