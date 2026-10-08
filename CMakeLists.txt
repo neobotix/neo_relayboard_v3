@@ -1,7 +1,7 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.20)
 project(neo_relayboard_v3)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 ## By default build with code optimization and no debug info
@@ -13,6 +13,7 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_action REQUIRED)
 find_package(std_srvs REQUIRED)
+find_package(std_msgs REQUIRED)
 find_package(trajectory_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(neo_msgs2 REQUIRED)
@@ -23,6 +24,7 @@ set(dependencies
 	rclcpp
 	rclcpp_action
 	std_srvs
+	std_msgs
 	trajectory_msgs
 	sensor_msgs
 	neo_msgs2
@@ -35,6 +37,7 @@ ament_export_include_directories(
 	generated/include
 )
 
+# VNX headers and library are supplied by the system installation.
 file(GLOB GENERATED generated/src/*.cpp)
 
 add_library(relayboardv3 SHARED
@@ -47,7 +50,7 @@ target_include_directories(relayboardv3 PUBLIC
 	generated/include/
 )
 
-target_link_libraries(relayboardv3
+target_link_libraries(relayboardv3 PUBLIC
 	pilot_public
 	pilot_kinematics_bicycle_interface
 	pilot_kinematics_differential_interface
@@ -60,11 +63,19 @@ add_executable(relayboardv3_node
 	src/relayboardv3_node.cpp
 )
 
-ament_target_dependencies(relayboardv3
-	${dependencies}
+target_link_libraries(relayboardv3 PUBLIC
+  rclcpp::rclcpp
+  rclcpp_action::rclcpp_action
+  std_srvs::std_srvs
+  std_msgs::std_msgs
+  trajectory_msgs::trajectory_msgs
+  sensor_msgs::sensor_msgs
+  neo_msgs2::neo_msgs2
+  neo_srvs2::neo_srvs2
+  neo_actions2::neo_actions2
 )
 
-ament_export_dependencies(relayboardv3
+ament_export_dependencies(
 	${dependencies}
 )
 
@@ -82,5 +93,7 @@ install(TARGETS relayboardv3
     RUNTIME DESTINATION ${PROJECT_NAME})
 install(TARGETS relayboardv3_node DESTINATION lib/${PROJECT_NAME})
 install(DIRECTORY launch config DESTINATION share/${PROJECT_NAME})
+
+ament_export_libraries(relayboardv3)
 
 ament_package()
