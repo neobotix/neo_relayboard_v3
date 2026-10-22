@@ -167,12 +167,28 @@ void RelayBoardV3::handle(std::shared_ptr<const pilot::SafetyState> value){
 
 	out->current_safety_field = value->current_safety_field;
 	out->triggered_cutoff_paths = {false};
-
 	for (char path : value->triggered_cutoff_paths) {
 		if (path >= 0 && path < 8) {
 			out->triggered_cutoff_paths[path] = true;
 		}
 	}
+	switch(value->safety_mode){
+	case pilot::safety_mode_e::APPROACHING:
+		out->safety_mode.mode = neo_msgs2::msg::SafetyMode::SM_APPROACHING;
+		break;
+	case pilot::safety_mode_e::DEPARTING:
+		out->safety_mode.mode = neo_msgs2::msg::SafetyMode::SM_DEPARTING;
+		break;
+	case pilot::safety_mode_e::WORKING:
+		out->safety_mode.mode = neo_msgs2::msg::SafetyMode::SM_WORKING;
+		break;
+	case pilot::safety_mode_e::HANDLING:
+		out->safety_mode.mode = neo_msgs2::msg::SafetyMode::SM_HANDLING;
+		break;
+	default:
+		out->safety_mode.mode = neo_msgs2::msg::SafetyMode::SM_NONE;
+	}
+
 
 	publish_to_ros(out, vnx_sample->topic, rclcpp::QoS(rclcpp::KeepLast(max_publish_queue_ros)));
 }
